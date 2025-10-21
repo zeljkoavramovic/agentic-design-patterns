@@ -1,4 +1,4 @@
-# Agentic Patterns
+# Agentic Design Patterns
 
 This repository contains an interactive, single-file tutorial on 21 essential agentic design patterns for building intelligent AI systems.
 
@@ -6,10 +6,15 @@ This repository contains an interactive, single-file tutorial on 21 essential ag
 
 ## Overview
 
-The included `21 Agentic Design Patterns.html` file is a self-contained web page that provides a comprehensive guide to various patterns used in modern AI development. It's designed to make complex architectural concepts accessible through simple visual representations, detailed explanations, and real-world examples.
+The included `index.html` file is a self-contained web page that provides a comprehensive guide to various patterns used in modern AI development. It's designed to make complex architectural concepts accessible through simple visual representations, detailed explanations, and real-world examples.
 
-### How to Use
-Simply download the `21 Agentic Design Patterns.html` file and open it in any modern web browser. No internet connection is required after the initial download.
+### Online Use
+Open https://zeljkoavramovic.github.io/agentic-design-patterns/ in your browser
+
+### Offline Use
+Simply download the `index.html` file and open it in any modern web browser. No internet connection is required after the initial download.
+
+
 
 ## Pattern Relationships
 
