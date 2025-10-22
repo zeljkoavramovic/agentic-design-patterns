@@ -23,31 +23,50 @@
             --difficulty-advanced: #ff9800;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        html {
             margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--primary-text);
             display: flex;
-            height: 100vh;
             overflow: hidden;
         }
 
         #sidebar {
-            width: 280px;
+            width: 300px;
             background-color: var(--sidebar-bg);
-            padding: 20px;
+            padding: 0;
             overflow-y: auto;
             border-right: 1px solid var(--border-color);
             flex-shrink: 0;
+            transition: transform 0.3s ease;
+            height: 100vh;
+            -webkit-overflow-scrolling: touch;
         }
 
         #sidebar h1 {
             font-size: 1.5em;
             color: var(--accent-color);
-            margin-top: 0;
+            margin: 0;
             border-bottom: 2px solid var(--accent-color);
-            padding-bottom: 10px;
+            padding: 20px 20px 10px 20px;
+        }
+
+        #sidebar nav {
+            padding: 0 20px 20px 20px;
         }
 
         #sidebar nav ul {
@@ -105,10 +124,203 @@
             flex-shrink: 0;
         }
 
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            background: var(--accent-color);
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .menu-toggle span {
+            display: block;
+            width: 24px;
+            height: 3px;
+            background: var(--bg-color);
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-overlay.active {
+            opacity: 1;
+        }
+
+        /* Loading states for diagrams */
+        .mermaid-loading {
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-top: 30px;
+        }
+
+        .mermaid-loading::after {
+            content: "Loading diagram...";
+            color: var(--secondary-text);
+            font-style: italic;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Smooth scroll behavior */
         #main-content {
-            flex-grow: 1;
+            scroll-behavior: smooth;
+        }
+
+        /* Back to top button */
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 900;
+        }
+
+        .back-to-top.visible {
+            display: flex;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .back-to-top:active {
+            transform: translateY(-1px);
+        }
+
+        /* Touch feedback for interactive elements */
+        @media (hover: none) {
+            #sidebar nav li a:active,
+            .menu-toggle:active,
+            .back-to-top:active {
+                opacity: 0.7;
+            }
+        }
+
+        /* Improved focus states for accessibility */
+        a:focus,
+        button:focus {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+
+        /* Loading animation for pattern transitions */
+        .pattern-container {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Skeleton loading for content */
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                var(--card-bg) 25%,
+                var(--border-color) 50%,
+                var(--card-bg) 75%
+            );
+            background-size: 200% 100%;
+            animation: loading 1.5s ease-in-out infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-text {
+            height: 16px;
+            margin-bottom: 10px;
+        }
+
+        .skeleton-title {
+            height: 32px;
+            width: 60%;
+            margin-bottom: 20px;
+        }
+
+        #main-content {
+            flex: 1;
             padding: 40px;
             overflow-y: auto;
+            overflow-x: hidden;
+            height: 100vh;
+            -webkit-overflow-scrolling: touch;
         }
         
         .pattern-container {
@@ -156,6 +368,8 @@
             border-left: 3px solid var(--accent-color);
             padding-left: 20px;
             margin: 20px 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         .info-section h3 {
@@ -227,11 +441,18 @@
             border: 1px solid var(--border-color);
             margin-top: 30px;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            max-width: 100%;
         }
 
         #relationship-graph svg {
             min-width: 1400px;
             width: 100%;
+            height: auto;
+        }
+        
+        .mermaid svg {
+            max-width: 100%;
             height: auto;
         }
 
@@ -299,16 +520,198 @@
             border: none;
             margin-bottom: 5px;
         }
+        
+        .pattern-analogy p,
+        .real-world-examples li,
+        .grid-item li {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
 
         @media (max-width: 1024px) {
-            body { flex-direction: column; height: auto; }
-            #sidebar { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border-color); }
-            #main-content { height: auto; padding: 20px; }
+            .menu-toggle {
+                display: flex;
+            }
+            
+            .mobile-overlay {
+                display: block;
+            }
+            
+            #sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                height: 100dvh;
+                width: 300px;
+                transform: translateX(-100%);
+                z-index: 999;
+                border-right: 1px solid var(--border-color);
+                border-bottom: none;
+            }
+            
+            #sidebar.active {
+                transform: translateX(0);
+            }
+            
+            html, body {
+                height: auto;
+                overflow: visible;
+            }
+            
+            body {
+                flex-direction: column;
+            }
+            
+            #main-content {
+                width: 100%;
+                height: auto;
+                min-height: 100vh;
+                padding: 70px 20px 20px 20px;
+                overflow: visible;
+            }
+            
+            #sidebar nav li a {
+                padding: 14px 15px;
+                font-size: 1em;
+            }
+            
+            .mermaid {
+                padding: 15px;
+                font-size: 0.9em;
+            }
+            
+            #relationship-graph svg {
+                min-width: 800px;
+            }
         }
-        @media (max-width: 768px) { .two-column-grid { grid-template-columns: 1fr; } }
+        
+        @media (max-width: 900px) {
+            .two-column-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            #main-content {
+                padding: 70px 16px 16px 16px;
+            }
+            
+            .pattern-header h2 {
+                font-size: 2em;
+            }
+            
+            .section-title {
+                font-size: 1.5em;
+            }
+            
+            .mermaid {
+                padding: 10px;
+                font-size: 0.85em;
+            }
+            
+            #relationship-graph svg {
+                min-width: 600px;
+            }
+            
+            .tags-container {
+                gap: 8px;
+            }
+            
+            .tag {
+                font-size: 0.75em;
+                padding: 4px 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #main-content {
+                padding: 70px 12px 12px 12px;
+            }
+            
+            .pattern-header h2 {
+                font-size: 1.75em;
+            }
+            
+            .section-title {
+                font-size: 1.3em;
+            }
+            
+            #relationship-graph svg {
+                min-width: 400px;
+            }
+            
+            .back-to-top {
+                width: 44px;
+                height: 44px;
+                bottom: 15px;
+                right: 15px;
+                font-size: 20px;
+            }
+        }
+
+        /* Reduce motion for users who prefer it */
+        @media (prefers-reduced-motion: reduce) {
+            html,
+            #main-content,
+            .pattern-container,
+            .menu-toggle span,
+            .mobile-overlay,
+            #sidebar,
+            .back-to-top {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --bg-color: #000000;
+                --primary-text: #ffffff;
+                --accent-color: #00ffff;
+                --border-color: #ffffff;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .menu-toggle,
+            .mobile-overlay,
+            .back-to-top,
+            #sidebar {
+                display: none !important;
+            }
+            
+            #main-content {
+                width: 100%;
+                padding: 0;
+                overflow: visible;
+            }
+            
+            .pattern-container {
+                max-width: 100%;
+            }
+            
+            .mermaid {
+                page-break-inside: avoid;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <div class="mobile-overlay" id="mobile-overlay"></div>
+
+    <button class="back-to-top" id="back-to-top" aria-label="Back to top">↑</button>
 
     <aside id="sidebar">
         <h1>Agentic Design Patterns</h1>
@@ -2212,7 +2615,14 @@
                     <div class="real-world-examples"><ul>${pattern.realWorldExamples.join('')}</ul></div>`;
                 
                 const mermaidContainer = document.getElementById('mermaid-diagram');
-                if(mermaidContainer) await mermaid.run({ nodes: [mermaidContainer] });
+                if(mermaidContainer) {
+                    try {
+                        await mermaid.run({ nodes: [mermaidContainer] });
+                    } catch (error) {
+                        mermaidContainer.innerHTML = '<p style="color: var(--con-color); padding: 20px;">Error loading diagram. Please refresh the page.</p>';
+                        console.error('Mermaid rendering error:', error);
+                    }
+                }
             };
 
             const renderCaseStudy = (caseStudyId) => {
@@ -2251,8 +2661,6 @@
                     </div>
                     <p class="pattern-summary">This diagram shows how different agentic patterns often connect and rely on each other. Solid lines indicate a strong dependency ("requires"), while dotted lines show a common combination ("uses" or "is a form of"). Click on any pattern to learn more about it.</p>
                     <div class="mermaid" id="relationship-graph">${relationshipsGraphCode}</div>`;
-                const graphContainer = document.getElementById('relationship-graph');
-                await mermaid.run({ nodes: [graphContainer] });
                 
                 const patternIdMap = {
                     P1: 'prompt-chaining', P2: 'routing', P3: 'parallelization', P4: 'reflection', P5: 'tool-use',
@@ -2260,14 +2668,26 @@
                     P11: 'goal-setting-and-monitoring', P12: 'exception-handling-and-recovery', P13: 'human-in-the-loop', P14: 'knowledge-retrieval-rag', P15: 'inter-agent-communication-a2a',
                     P16: 'resource-aware-optimization', P17: 'reasoning-techniques', P18: 'guardrails-safety-patterns', P19: 'evaluation-and-monitoring', P20: 'prioritization', P21: 'exploration-and-discovery'
                 };
-                Object.keys(patternIdMap).forEach(nodeId => {
-                    const nodeElement = graphContainer.querySelector(`[id^=${nodeId}]`);
-                    if (nodeElement) {
-                        nodeElement.addEventListener('click', () => {
-                            window.location.hash = patternIdMap[nodeId];
+                
+                const graphContainer = document.getElementById('relationship-graph');
+                if (graphContainer) {
+                    try {
+                        await mermaid.run({ nodes: [graphContainer] });
+                        
+                        // Add click handlers after rendering
+                        Object.keys(patternIdMap).forEach(nodeId => {
+                            const nodeElement = graphContainer.querySelector(`[id^=${nodeId}]`);
+                            if (nodeElement) {
+                                nodeElement.addEventListener('click', () => {
+                                    window.location.hash = patternIdMap[nodeId];
+                                });
+                            }
                         });
+                    } catch (error) {
+                        graphContainer.innerHTML = '<p style="color: var(--con-color); padding: 20px;">Error loading relationship diagram. Please refresh the page.</p>';
+                        console.error('Mermaid rendering error:', error);
                     }
-                });
+                }
             };
             
             // ADDED: Function to render the new Info page
@@ -2297,7 +2717,7 @@
                 const hash = window.location.hash.substring(1);
 
                 document.querySelectorAll('#pattern-nav a').forEach(link => link.classList.remove('active'));
-                const activeLink = document.querySelector(`a[href="#${hash}"]`);
+                const activeLink = document.querySelector(`a[href="#${hash || 'info'}"]`);
                 if(activeLink) activeLink.classList.add('active');
 
                 if (hash.startsWith('case-study')) {
@@ -2306,8 +2726,11 @@
                     renderRelationships();
                 } else if (hash === 'info') { // ADDED: Route for the info page
                     renderInfoPage();
+                } else if (hash) {
+                    renderPattern(hash);
                 } else {
-                    renderPattern(hash || patternsData[0].id);
+                    // Default to showing "About This Tutorial" when no hash is present
+                    renderInfoPage();
                 }
 
                 // Scroll to top of main content area
@@ -2321,6 +2744,62 @@
 
             window.addEventListener('hashchange', handleNavigation);
             handleNavigation();
+
+            // Back to top button functionality
+            const backToTopButton = document.getElementById('back-to-top');
+            const mainContent = document.getElementById('main-content');
+
+            mainContent.addEventListener('scroll', () => {
+                if (mainContent.scrollTop > 300) {
+                    backToTopButton.classList.add('visible');
+                } else {
+                    backToTopButton.classList.remove('visible');
+                }
+            });
+
+            backToTopButton.addEventListener('click', () => {
+                mainContent.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+
+            // Mobile menu toggle functionality
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const mobileOverlay = document.getElementById('mobile-overlay');
+
+            const toggleMenu = () => {
+                menuToggle.classList.toggle('active');
+                sidebar.classList.toggle('active');
+                mobileOverlay.classList.toggle('active');
+                // Don't change body overflow - it's already hidden
+            };
+
+            const closeMenu = () => {
+                menuToggle.classList.remove('active');
+                sidebar.classList.remove('active');
+                mobileOverlay.classList.remove('active');
+            };
+
+            menuToggle.addEventListener('click', toggleMenu);
+            mobileOverlay.addEventListener('click', closeMenu);
+
+            // Close menu when a navigation link is clicked
+            document.querySelectorAll('#sidebar nav a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 1024) {
+                        closeMenu();
+                    }
+                });
+            });
+
+            // Close menu on window resize if it becomes desktop size
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 1024) {
+                    closeMenu();
+                }
+            });
         });
     </script>
 </body>
