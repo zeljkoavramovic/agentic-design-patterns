@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Interactive Tutorial: Agentic Design Patterns</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
@@ -32,6 +33,7 @@
             margin: 0;
             padding: 0;
             height: 100%;
+            overflow-x: hidden;
         }
 
         body {
@@ -42,7 +44,8 @@
             background-color: var(--bg-color);
             color: var(--primary-text);
             display: flex;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: hidden;
         }
 
         #sidebar {
@@ -74,7 +77,7 @@
             padding: 0;
             margin: 0;
         }
-        
+
         #sidebar nav h2 {
             font-size: 0.9em;
             color: var(--secondary-text);
@@ -100,13 +103,13 @@
             background-color: var(--card-bg);
             color: var(--primary-text);
         }
-        
+
         #sidebar nav li a.active {
             background-color: var(--accent-color);
             color: var(--bg-color) !important;
             font-weight: bold;
         }
-        
+
         .difficulty-indicator {
             width: 10px;
             height: 10px;
@@ -114,10 +117,19 @@
             margin-right: 12px;
             flex-shrink: 0;
         }
-        .difficulty-foundational { background-color: var(--difficulty-foundational); }
-        .difficulty-intermediate { background-color: var(--difficulty-intermediate); }
-        .difficulty-advanced { background-color: var(--difficulty-advanced); }
-        
+
+        .difficulty-foundational {
+            background-color: var(--difficulty-foundational);
+        }
+
+        .difficulty-intermediate {
+            background-color: var(--difficulty-intermediate);
+        }
+
+        .difficulty-advanced {
+            background-color: var(--difficulty-advanced);
+        }
+
         .sidebar-icon {
             margin-right: 12px;
             font-size: 1.1em;
@@ -175,10 +187,12 @@
             z-index: 998;
             opacity: 0;
             transition: opacity 0.3s ease;
+            pointer-events: none;
         }
 
         .mobile-overlay.active {
             opacity: 1;
+            pointer-events: auto;
         }
 
         /* Loading states for diagrams */
@@ -211,7 +225,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Smooth scroll behavior */
@@ -255,6 +271,7 @@
 
         /* Touch feedback for interactive elements */
         @media (hover: none) {
+
             #sidebar nav li a:active,
             .menu-toggle:active,
             .back-to-top:active {
@@ -279,6 +296,7 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -287,20 +305,23 @@
 
         /* Skeleton loading for content */
         .skeleton {
-            background: linear-gradient(
-                90deg,
-                var(--card-bg) 25%,
-                var(--border-color) 50%,
-                var(--card-bg) 75%
-            );
+            background: linear-gradient(90deg,
+                    var(--card-bg) 25%,
+                    var(--border-color) 50%,
+                    var(--card-bg) 75%);
             background-size: 200% 100%;
             animation: loading 1.5s ease-in-out infinite;
             border-radius: 4px;
         }
 
         @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
         }
 
         .skeleton-text {
@@ -322,11 +343,13 @@
             height: 100vh;
             -webkit-overflow-scrolling: touch;
         }
-        
+
         .pattern-container {
             max-width: 900px;
             margin: 0 auto;
             transition: max-width 0.3s ease-in-out;
+            overflow-x: hidden;
+            width: 100%;
         }
 
         .pattern-container.relationships-view {
@@ -346,22 +369,27 @@
             gap: 10px;
             margin-bottom: 20px;
         }
+
         .tag {
             padding: 5px 12px;
             border-radius: 15px;
             font-size: 0.8em;
             font-weight: bold;
         }
+
         .difficulty-tag {
             color: var(--bg-color);
         }
+
         .applicability-tag {
             background-color: var(--card-bg);
             color: var(--secondary-text);
             border: 1px solid var(--border-color);
         }
 
-        .pattern-summary, .case-study-section, .info-section {
+        .pattern-summary,
+        .case-study-section,
+        .info-section {
             font-size: 1.2em;
             font-style: italic;
             color: var(--secondary-text);
@@ -371,17 +399,18 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
-        
+
         .info-section h3 {
-             color: var(--primary-text);
-             font-style: normal;
+            color: var(--primary-text);
+            font-style: normal;
         }
-        
+
         .info-section a {
             color: var(--accent-color);
             text-decoration: none;
             font-weight: bold;
         }
+
         .info-section a:hover {
             text-decoration: underline;
         }
@@ -393,7 +422,7 @@
             margin: 30px 0;
             border: 1px solid var(--border-color);
         }
-        
+
         .pattern-analogy strong {
             color: var(--accent-color);
             display: block;
@@ -415,7 +444,10 @@
             gap: 30px;
         }
 
-        .grid-item ul { list-style-type: none; padding: 0; }
+        .grid-item ul {
+            list-style-type: none;
+            padding: 0;
+        }
 
         .grid-item li {
             background-color: var(--card-bg);
@@ -424,15 +456,28 @@
             margin-bottom: 10px;
             border-left: 3px solid;
         }
-        
-        .pros li { border-color: var(--pro-color); }
-        .cons li { border-color: var(--con-color); }
 
-        .grid-item h3 { font-size: 1.3em; margin-top: 0; }
-        
-        .pros h3 { color: var(--pro-color); }
-        .cons h3 { color: var(--con-color); }
-        
+        .pros li {
+            border-color: var(--pro-color);
+        }
+
+        .cons li {
+            border-color: var(--con-color);
+        }
+
+        .grid-item h3 {
+            font-size: 1.3em;
+            margin-top: 0;
+        }
+
+        .pros h3 {
+            color: var(--pro-color);
+        }
+
+        .cons h3 {
+            color: var(--con-color);
+        }
+
         .mermaid {
             background-color: #f9f9f9;
             border-radius: 8px;
@@ -440,9 +485,110 @@
             text-align: center;
             border: 1px solid var(--border-color);
             margin-top: 30px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow: visible;
             max-width: 100%;
+            position: relative;
+            touch-action: auto;
+            pointer-events: auto;
+            cursor: default;
+        }
+
+        /* Force black text only on mobile devices */
+        @media (max-width: 1024px) {
+
+            .mermaid text,
+            .mermaid tspan,
+            .mermaid .nodeLabel,
+            .mermaid .edgeLabel,
+            .mermaid .label {
+                fill: #000000 !important;
+                color: #000000 !important;
+            }
+        }
+
+        .mermaid.zoomed {
+            touch-action: none;
+            cursor: grab;
+        }
+
+        .mermaid.zoomed.dragging {
+            cursor: grabbing;
+        }
+
+        .mermaid-container {
+            position: relative;
+            overflow: hidden;
+            touch-action: auto;
+            cursor: default;
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .mermaid-container.zoomed {
+            touch-action: none;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .mermaid-container * {
+            max-width: 100%;
+        }
+
+        .mermaid-container .zoom-controls,
+        .mermaid-container .zoom-btn {
+            max-width: none;
+        }
+
+        .mermaid-container.zoomed {
+            cursor: grabbing;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 1000;
+            pointer-events: auto;
+            isolation: isolate;
+        }
+
+        .zoom-btn {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            min-height: 44px;
+            background: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s, opacity 0.1s;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            pointer-events: auto;
+            z-index: 1001;
+        }
+
+        .zoom-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .zoom-btn:active {
+            transform: scale(0.9);
+            opacity: 0.7;
         }
 
         #relationship-graph svg {
@@ -450,10 +596,14 @@
             width: 100%;
             height: auto;
         }
-        
-        .mermaid svg {
-            max-width: 100%;
+
+        .mermaid-container .mermaid svg {
+            max-width: none;
             height: auto;
+            display: block;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .mermaid svg .clickable:hover {
@@ -466,10 +616,12 @@
             font-size: 2.5em;
             color: var(--accent-color);
         }
+
         .case-study-section h3 {
             color: var(--primary-text);
             font-style: normal;
         }
+
         .patterns-used-list {
             display: flex;
             flex-wrap: wrap;
@@ -477,6 +629,7 @@
             padding-left: 20px;
             list-style-type: none;
         }
+
         .patterns-used-list li a {
             background-color: var(--card-bg);
             padding: 10px 15px;
@@ -487,6 +640,7 @@
             transition: background-color 0.2s;
             display: block;
         }
+
         .patterns-used-list li a:hover {
             background-color: #4a4e55;
         }
@@ -520,7 +674,7 @@
             border: none;
             margin-bottom: 5px;
         }
-        
+
         .pattern-analogy p,
         .real-world-examples li,
         .grid-item li {
@@ -532,11 +686,11 @@
             .menu-toggle {
                 display: flex;
             }
-            
+
             .mobile-overlay {
                 display: block;
             }
-            
+
             #sidebar {
                 position: fixed;
                 left: 0;
@@ -549,99 +703,121 @@
                 border-right: 1px solid var(--border-color);
                 border-bottom: none;
             }
-            
+
             #sidebar.active {
                 transform: translateX(0);
             }
-            
-            html, body {
+
+            html,
+            body {
                 height: auto;
-                overflow: visible;
+                overflow-x: hidden;
+                overflow-y: auto;
             }
-            
+
             body {
                 flex-direction: column;
             }
-            
+
             #main-content {
                 width: 100%;
                 height: auto;
                 min-height: 100vh;
                 padding: 70px 20px 20px 20px;
-                overflow: visible;
+                overflow-x: hidden;
+                overflow-y: auto;
             }
-            
+
             #sidebar nav li a {
                 padding: 14px 15px;
                 font-size: 1em;
             }
-            
+
             .mermaid {
                 padding: 15px;
                 font-size: 0.9em;
             }
-            
+
             #relationship-graph svg {
-                min-width: 800px;
+                min-width: 100%;
+            }
+
+            .mermaid-container {
+                width: 100%;
+                max-width: 100%;
             }
         }
-        
+
         @media (max-width: 900px) {
             .two-column-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
         }
-        
+
         @media (max-width: 768px) {
             #main-content {
                 padding: 70px 16px 16px 16px;
             }
-            
+
             .pattern-header h2 {
                 font-size: 2em;
             }
-            
+
             .section-title {
                 font-size: 1.5em;
             }
-            
+
             .mermaid {
                 padding: 10px;
                 font-size: 0.85em;
             }
-            
+
             #relationship-graph svg {
                 min-width: 600px;
             }
-            
+
             .tags-container {
                 gap: 8px;
             }
-            
+
             .tag {
                 font-size: 0.75em;
                 padding: 4px 10px;
             }
+
+            .zoom-controls {
+                top: 5px;
+                right: 5px;
+                gap: 8px;
+            }
+
+            .zoom-btn {
+                width: 48px;
+                height: 48px;
+                min-width: 48px;
+                min-height: 48px;
+                font-size: 22px;
+            }
         }
-        
+
         @media (max-width: 480px) {
             #main-content {
                 padding: 70px 12px 12px 12px;
             }
-            
+
             .pattern-header h2 {
                 font-size: 1.75em;
             }
-            
+
             .section-title {
                 font-size: 1.3em;
             }
-            
+
             #relationship-graph svg {
                 min-width: 400px;
             }
-            
+
             .back-to-top {
                 width: 44px;
                 height: 44px;
@@ -653,6 +829,7 @@
 
         /* Reduce motion for users who prefer it */
         @media (prefers-reduced-motion: reduce) {
+
             html,
             #main-content,
             .pattern-container,
@@ -678,29 +855,31 @@
 
         /* Print styles */
         @media print {
+
             .menu-toggle,
             .mobile-overlay,
             .back-to-top,
             #sidebar {
                 display: none !important;
             }
-            
+
             #main-content {
                 width: 100%;
                 padding: 0;
                 overflow: visible;
             }
-            
+
             .pattern-container {
                 max-width: 100%;
             }
-            
+
             .mermaid {
                 page-break-inside: avoid;
             }
         }
     </style>
 </head>
+
 <body>
 
     <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation menu">
@@ -726,6 +905,318 @@
 
     <script>
         mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+        // Zoom functionality for Mermaid diagrams
+        function initializeDiagramZoom() {
+            const mermaidDivs = document.querySelectorAll('.mermaid');
+
+            mermaidDivs.forEach((mermaidDiv, index) => {
+                // Skip if already initialized
+                if (mermaidDiv.classList.contains('zoom-initialized')) {
+                    return;
+                }
+
+                mermaidDiv.classList.add('zoom-initialized');
+
+                // Wrap in container
+                const container = document.createElement('div');
+                container.className = 'mermaid-container';
+                mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+                container.appendChild(mermaidDiv);
+
+                // Add zoom controls - create buttons properly for mobile
+                const controls = document.createElement('div');
+                controls.className = 'zoom-controls';
+
+                // Create buttons using DOM (not innerHTML) for better event handling
+                const zoomIn = document.createElement('button');
+                zoomIn.className = 'zoom-btn zoom-in';
+                zoomIn.setAttribute('aria-label', 'Zoom in');
+                zoomIn.textContent = '+';
+                zoomIn.type = 'button';
+
+                const zoomOut = document.createElement('button');
+                zoomOut.className = 'zoom-btn zoom-out';
+                zoomOut.setAttribute('aria-label', 'Zoom out');
+                zoomOut.textContent = '−';
+                zoomOut.type = 'button';
+
+                const zoomReset = document.createElement('button');
+                zoomReset.className = 'zoom-btn zoom-reset';
+                zoomReset.setAttribute('aria-label', 'Reset zoom');
+                zoomReset.textContent = '⟲';
+                zoomReset.type = 'button';
+
+                controls.appendChild(zoomIn);
+                controls.appendChild(zoomOut);
+                controls.appendChild(zoomReset);
+                container.appendChild(controls);
+
+                let scale = 1;
+                let translateX = 0;
+                let translateY = 0;
+                let isDragging = false;
+                let startX, startY;
+                let lastTouchDistance = 0;
+
+                const svg = mermaidDiv.querySelector('svg');
+                if (!svg) return;
+
+                // Make sure SVG allows touch events to bubble
+                svg.style.pointerEvents = 'auto';
+
+                // Make mermaid div fill container and be touchable
+                mermaidDiv.style.minHeight = '400px';
+                mermaidDiv.style.width = '100%';
+
+                // Ensure touch events reach handlers
+                mermaidDiv.style.touchAction = 'none';
+                container.style.touchAction = 'none';
+                svg.style.touchAction = 'none';
+
+                function updateTransform() {
+                    svg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+                    svg.style.transformOrigin = 'center center';
+                    svg.style.transition = isDragging ? 'none' : 'transform 0.2s ease';
+
+                    // Add/remove zoomed class based on scale
+                    if (scale > 1.01) {
+                        mermaidDiv.classList.add('zoomed');
+                        container.classList.add('zoomed');
+                    } else {
+                        mermaidDiv.classList.remove('zoomed');
+                        container.classList.remove('zoomed');
+                    }
+                }
+
+                // Zoom functions
+                const doZoomIn = () => {
+                    scale = Math.min(scale * 1.2, 5);
+                    updateTransform();
+                };
+
+                const doZoomOut = () => {
+                    scale = Math.max(scale / 1.2, 0.5);
+                    updateTransform();
+                };
+
+                const doZoomReset = () => {
+                    scale = 1;
+                    translateX = 0;
+                    translateY = 0;
+                    updateTransform();
+                };
+
+                // Simple, direct event handlers for mobile
+                // Use touchstart (not touchend) for immediate response
+                const setupButton = (btn, action) => {
+                    let touchHandled = false;
+
+                    // Touch handler for mobile
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        touchHandled = true;
+                        action();
+                        // Visual feedback
+                        btn.style.transform = 'scale(0.9)';
+                        btn.style.opacity = '0.7';
+                    }, { passive: false });
+
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Reset visual feedback
+                        btn.style.transform = '';
+                        btn.style.opacity = '';
+                    }, { passive: false });
+
+                    // Click handler for desktop
+                    btn.addEventListener('click', (e) => {
+                        if (touchHandled) {
+                            touchHandled = false;
+                            return;
+                        }
+                        e.preventDefault();
+                        e.stopPropagation();
+                        action();
+                    });
+
+                    // Prevent mousedown from interfering
+                    btn.addEventListener('mousedown', (e) => {
+                        e.stopPropagation();
+                    });
+                };
+
+                setupButton(zoomIn, doZoomIn);
+                setupButton(zoomOut, doZoomOut);
+                setupButton(zoomReset, doZoomReset);
+
+                // Mouse drag - conditional behavior (same as touch)
+                mermaidDiv.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('.zoom-controls')) return;
+
+                    // Only enable dragging if zoomed in
+                    if (scale > 1.01) {
+                        isDragging = true;
+                        startX = e.clientX - translateX;
+                        startY = e.clientY - translateY;
+                        container.classList.add('dragging');
+                        mermaidDiv.classList.add('dragging');
+                    }
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging || scale <= 1.01) return;
+                    translateX = e.clientX - startX;
+                    translateY = e.clientY - startY;
+                    updateTransform();
+                });
+
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                    container.classList.remove('dragging');
+                    mermaidDiv.classList.remove('dragging');
+                });
+
+                // Touch drag - conditional behavior based on zoom level
+                let touchStartTime = 0;
+                let hasMoved = false;
+
+                // Touch handler function
+                const handleTouchStart = (e) => {
+
+                    // Completely ignore touches on zoom controls
+                    const touchTarget = e.target;
+                    if (touchTarget === zoomIn || touchTarget === zoomOut || touchTarget === zoomReset ||
+                        touchTarget.closest('.zoom-controls') || touchTarget.classList.contains('zoom-btn')) {
+                        console.log('Ignoring touch on button');
+                        return;
+                    }
+
+                    touchStartTime = Date.now();
+                    hasMoved = false;
+
+                    if (e.touches.length === 1) {
+                        // Only enable dragging if zoomed in
+                        if (scale > 1.01) {
+                            isDragging = true;
+                            startX = e.touches[0].clientX - translateX;
+                            startY = e.touches[0].clientY - translateY;
+                            container.classList.add('dragging');
+                            mermaidDiv.classList.add('dragging');
+                        }
+                        // If scale = 1, don't set isDragging, let page scroll naturally
+                    } else if (e.touches.length === 2) {
+                        // Two fingers - pinch zoom (always enabled)
+                        isDragging = false;
+                        const dx = e.touches[0].clientX - e.touches[1].clientX;
+                        const dy = e.touches[0].clientY - e.touches[1].clientY;
+                        lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
+                    }
+                };
+
+                // Attach to both mermaidDiv and SVG with capture phase
+
+
+                // Try attaching to container as well
+                container.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+                mermaidDiv.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+                svg.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+
+                // Also try without capture
+                container.addEventListener('touchstart', handleTouchStart, { passive: true });
+                mermaidDiv.addEventListener('touchstart', handleTouchStart, { passive: true });
+                svg.addEventListener('touchstart', handleTouchStart, { passive: true });
+
+
+
+                const handleTouchMove = (e) => {
+                    // Only prevent default if we're zoomed in and dragging, or pinch zooming
+                    if ((isDragging && scale > 1.01) || e.touches.length === 2) {
+                        e.preventDefault();
+                        hasMoved = true;
+                    }
+                    // If scale = 1, don't preventDefault, allow page scroll
+
+                    if (e.touches.length === 1 && isDragging && scale > 1.01) {
+                        // Single finger drag (only when zoomed)
+                        const newX = e.touches[0].clientX - startX;
+                        const newY = e.touches[0].clientY - startY;
+
+                        // Only update if there's actual movement
+                        if (Math.abs(newX - translateX) > 1 || Math.abs(newY - translateY) > 1) {
+                            translateX = newX;
+                            translateY = newY;
+                            updateTransform();
+                        }
+                    } else if (e.touches.length === 2) {
+                        // Two finger pinch zoom (always enabled)
+                        const dx = e.touches[0].clientX - e.touches[1].clientX;
+                        const dy = e.touches[0].clientY - e.touches[1].clientY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (lastTouchDistance > 0) {
+                            const delta = distance / lastTouchDistance;
+                            const newScale = scale * delta;
+
+                            // Only update if change is significant
+                            if (Math.abs(newScale - scale) > 0.01) {
+                                scale = Math.max(0.5, Math.min(5, newScale));
+                                updateTransform();
+                            }
+                        }
+
+                        lastTouchDistance = distance;
+                    }
+                };
+
+                container.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+                mermaidDiv.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+                svg.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+
+                container.addEventListener('touchmove', handleTouchMove, { passive: false });
+                mermaidDiv.addEventListener('touchmove', handleTouchMove, { passive: false });
+                svg.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+                const handleTouchEnd = (e) => {
+                    // If it was a quick tap without movement, might be a click on diagram element
+                    const touchDuration = Date.now() - touchStartTime;
+
+                    if (!hasMoved && touchDuration < 300 && e.target.closest('svg')) {
+                        // Let click events through for diagram interactions
+                        // (like clicking nodes in relationship graph)
+                    }
+
+                    isDragging = false;
+                    lastTouchDistance = 0;
+                    container.classList.remove('dragging');
+                    mermaidDiv.classList.remove('dragging');
+                };
+
+                const handleTouchCancel = () => {
+                    isDragging = false;
+                    lastTouchDistance = 0;
+                    container.classList.remove('dragging');
+                    mermaidDiv.classList.remove('dragging');
+                };
+
+                container.addEventListener('touchend', handleTouchEnd, { capture: true });
+                mermaidDiv.addEventListener('touchend', handleTouchEnd, { capture: true });
+                svg.addEventListener('touchend', handleTouchEnd, { capture: true });
+                container.addEventListener('touchcancel', handleTouchCancel, { capture: true });
+                mermaidDiv.addEventListener('touchcancel', handleTouchCancel, { capture: true });
+                svg.addEventListener('touchcancel', handleTouchCancel, { capture: true });
+
+                // Mouse wheel zoom
+                container.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                    scale = Math.max(0.5, Math.min(5, scale * delta));
+                    updateTransform();
+                }, { passive: false });
+            });
+        }
 
         const patternsData = [
             {
@@ -2301,7 +2792,7 @@
                     '<li><strong>Market Opportunity Finder:</strong><ul><li>Consumer trend analysis</li><li>Competitor landscape mapping</li><li>Technology convergence identification</li><li>Unmet need discovery</li><li>Business model innovation</li><li>Partnership opportunity scouting</li></ul></li>',
                     '<li><strong>Scientific Research Assistant:</strong><ul><li>Literature review automation</li><li>Cross-discipline connection finding</li><li>Experiment design suggestions</li><li>Data pattern discovery</li><li>Hypothesis generation</li><li>Collaboration network building</li></ul></li>',
                     '<li><strong>Technology Innovation Scout:</strong><ul><li>Patent landscape analysis</li><li>Emerging technology tracking</li><li>Research lab monitoring</li><li>Startup ecosystem mapping</li><li>Technical feasibility assessment</li><li>Innovation opportunity ranking</li></ul></li>',
- '<li><strong>Intelligence Analysis System:</strong><ul><li>Open source intelligence gathering</li><li>Pattern recognition across sources</li><li>Threat landscape mapping</li><li>Anomaly detection</li><li>Predictive modeling</li><li>Strategic assessment generation</li></ul></li>',
+                    '<li><strong>Intelligence Analysis System:</strong><ul><li>Open source intelligence gathering</li><li>Pattern recognition across sources</li><li>Threat landscape mapping</li><li>Anomaly detection</li><li>Predictive modeling</li><li>Strategic assessment generation</li></ul></li>',
                     '<li><strong>Educational Research Platform:</strong><ul><li>Learning method exploration</li><li>Curriculum gap analysis</li><li>Student performance patterns</li><li>Pedagogical innovation discovery</li><li>Best practice identification</li><li>Intervention strategy development</li></ul></li>'
                 ],
                 mermaidCode: `graph TD
@@ -2392,7 +2883,7 @@
     style End fill:#c8e6c9`
             },
         ];
-        
+
         const caseStudiesData = [
             {
                 id: "case-study-customer-support",
@@ -2479,7 +2970,7 @@
                 patterns: ["Exploration & Discovery"]
             }
         ];
-        
+
         const relationshipsGraphCode = `
             graph LR
                 subgraph "Core Patterns"
@@ -2534,9 +3025,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             const navContainer = document.getElementById('pattern-nav');
             const displayContainer = document.getElementById('pattern-display');
-            
+
             const navUl = document.createElement('ul');
-            
+
             // ADDED: Info section
             const infoHeader = document.createElement('h2');
             infoHeader.textContent = 'Info';
@@ -2587,7 +3078,7 @@
 
                 const difficultyTag = `<span class="tag difficulty-tag difficulty-${pattern.difficulty.toLowerCase()}">${pattern.difficulty}</span>`;
                 const applicabilityTags = pattern.applicability.map(tag => `<span class="tag applicability-tag">${tag}</span>`).join('');
-                
+
                 displayContainer.innerHTML = `
                     <div class="pattern-header">
                         <h2>${pattern.name}</h2>
@@ -2613,11 +3104,15 @@
                     </div>
                     <h3 class="section-title">Real-World Examples</h3>
                     <div class="real-world-examples"><ul>${pattern.realWorldExamples.join('')}</ul></div>`;
-                
+
                 const mermaidContainer = document.getElementById('mermaid-diagram');
-                if(mermaidContainer) {
+                if (mermaidContainer) {
                     try {
                         await mermaid.run({ nodes: [mermaidContainer] });
+                        // Small delay to ensure SVG is fully rendered
+                        setTimeout(() => {
+                            initializeDiagramZoom();
+                        }, 100);
                     } catch (error) {
                         mermaidContainer.innerHTML = '<p style="color: var(--con-color); padding: 20px;">Error loading diagram. Please refresh the page.</p>';
                         console.error('Mermaid rendering error:', error);
@@ -2629,7 +3124,7 @@
                 displayContainer.classList.remove('relationships-view');
                 const cs = caseStudiesData.find(c => c.id === caseStudyId);
                 if (!cs) return;
-                
+
                 const patternsHtml = cs.patterns.map(patternName => {
                     const pattern = patternsData.find(p => p.name.toLowerCase().includes(patternName.toLowerCase().split(' ')[0]));
                     return `<li><a href="#${pattern.id}">${pattern.name}</a></li>`;
@@ -2661,19 +3156,22 @@
                     </div>
                     <p class="pattern-summary">This diagram shows how different agentic patterns often connect and rely on each other. Solid lines indicate a strong dependency ("requires"), while dotted lines show a common combination ("uses" or "is a form of"). Click on any pattern to learn more about it.</p>
                     <div class="mermaid" id="relationship-graph">${relationshipsGraphCode}</div>`;
-                
+
                 const patternIdMap = {
                     P1: 'prompt-chaining', P2: 'routing', P3: 'parallelization', P4: 'reflection', P5: 'tool-use',
                     P6: 'planning', P7: 'multi-agent-collaboration', P8: 'memory-management', P9: 'learning-and-adaptation', P10: 'model-context-protocol',
                     P11: 'goal-setting-and-monitoring', P12: 'exception-handling-and-recovery', P13: 'human-in-the-loop', P14: 'knowledge-retrieval-rag', P15: 'inter-agent-communication-a2a',
                     P16: 'resource-aware-optimization', P17: 'reasoning-techniques', P18: 'guardrails-safety-patterns', P19: 'evaluation-and-monitoring', P20: 'prioritization', P21: 'exploration-and-discovery'
                 };
-                
+
                 const graphContainer = document.getElementById('relationship-graph');
                 if (graphContainer) {
                     try {
                         await mermaid.run({ nodes: [graphContainer] });
-                        
+                        setTimeout(() => {
+                            initializeDiagramZoom();
+                        }, 100);
+
                         // Add click handlers after rendering
                         Object.keys(patternIdMap).forEach(nodeId => {
                             const nodeElement = graphContainer.querySelector(`[id^=${nodeId}]`);
@@ -2689,7 +3187,7 @@
                     }
                 }
             };
-            
+
             // ADDED: Function to render the new Info page
             const renderInfoPage = () => {
                 displayContainer.classList.remove('relationships-view');
@@ -2718,7 +3216,7 @@
 
                 document.querySelectorAll('#pattern-nav a').forEach(link => link.classList.remove('active'));
                 const activeLink = document.querySelector(`a[href="#${hash || 'info'}"]`);
-                if(activeLink) activeLink.classList.add('active');
+                if (activeLink) activeLink.classList.add('active');
 
                 if (hash.startsWith('case-study')) {
                     renderCaseStudy(hash);
@@ -2803,4 +3301,5 @@
         });
     </script>
 </body>
+
 </html>
