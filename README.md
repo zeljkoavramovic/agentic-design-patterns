@@ -107,6 +107,15 @@ The tutorial covers the following 21 patterns, grouped into categories:
 
 
 
+## Support the Project
+
+If this project has helped you, support is most welcome:
+
+- ⭐ **Star the repository** to show your appreciation.
+- 💬 **Spread the word** about this repository.
+
+
+
 ## Credits
 
 The patterns, diagrams, and explanations are sourced from the excellent work done by Prompt Advisers. For more information and to view the original source files, please visit their GitHub repository:
