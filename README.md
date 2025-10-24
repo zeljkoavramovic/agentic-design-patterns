@@ -78,7 +78,7 @@ graph LR
 
 ## Patterns Included
 
-The tutorial covers the following 21 patterns, grouped into categories:
+The tutorial covers the following 22 patterns, grouped into categories:
 
 ### Core Patterns
 - Prompt Chaining
