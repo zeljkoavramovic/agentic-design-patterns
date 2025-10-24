@@ -133,9 +133,10 @@ If this project has helped you, support is most welcome:
 ## Credits
 
 The patterns, diagrams, and explanations are sourced from the excellent work done by Prompt Advisers. For more information and to view the original source files, please visit their GitHub repository:
-
 [https://github.com/promptadvisers/agentic-design-patterns-docs](https://github.com/promptadvisers/agentic-design-patterns-docs)
 
 For those who want to dig much deeper, their work is based on a book from Antonio Gulli:
-
 https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018
+
+Awareness Pattern origin (thanks to user Thaddy from Lazarus forum for a pointer):
+https://www.researchgate.net/publication/238675575_Brahms_A_multi-agent_modelling_environment_for_simulating_work_processes_and_practices
