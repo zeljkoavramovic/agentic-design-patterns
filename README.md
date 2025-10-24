@@ -1,6 +1,6 @@
 # Agentic Design Patterns
 
-This repository contains an interactive, single-file tutorial on 21 essential agentic design patterns for building intelligent AI systems.
+This repository contains an interactive, single-file tutorial on 22 essential agentic design patterns for building intelligent AI systems.
 
 
 
@@ -42,30 +42,36 @@ graph LR
         P13("Human-in-the-Loop")
         P14("Knowledge Retrieval RAG")
         P15("Inter-Agent Communication")
+        P16("Awareness")
     end
     subgraph "Optimization & Strategic"
-        P16("Resource-Aware Optimization")
-        P17("Reasoning Techniques")
-        P18("Guardrails & Safety")
-        P19("Evaluation & Monitoring")
-        P20("Prioritization")
-        P21("Exploration & Discovery")
+        P17("Resource-Aware Optimization")
+        P18("Reasoning Techniques")
+        P19("Guardrails & Safety")
+        P20("Evaluation & Monitoring")
+        P21("Prioritization")
+        P22("Exploration & Discovery")
     end
-    
+
     P7 -- "requires" --> P15
     P7 -. "uses" .-> P6
     P7 -. "uses" .-> P8
     P6 -- "can be composed of" --> P1
     P6 -- "often requires" --> P5
     P14 -- "is a form of" --> P5
-    P2 -- "is used by" --> P16
-    P4 -- "is a form of" --> P19
+    P2 -- "is used by" --> P17
+    P4 -- "is a form of" --> P20
     P9 -- "is enabled by" --> P13
-    P13 -- "is triggered by" --> P18
+    P13 -- "is triggered by" --> P19
     P13 -- "is triggered by" --> P12
-    P17 -- "can be improved by" --> P4
-    P21 -- "is a form of" --> P6
+    P18 -- "can be improved by" --> P4
+    P22 -- "is a form of" --> P6
     P1 -- "often needs" --> P12
+    P6 -- "detects" --> P16
+    P17 -- "detects" --> P16
+    P7 -- "detects" --> P16
+    P16 -- "provides facts for" --> P6
+    P16 -- "provides facts for" --> P17
 ```
 
 
@@ -94,6 +100,7 @@ The tutorial covers the following 21 patterns, grouped into categories:
 - Human-in-the-Loop
 - Knowledge Retrieval (RAG)
 - Inter-Agent Communication
+- Awareness
 
 ### Optimization Patterns
 - Resource-Aware Optimization
@@ -102,8 +109,15 @@ The tutorial covers the following 21 patterns, grouped into categories:
 - Evaluation & Monitoring
 
 ### Strategic Patterns
+
 - Prioritization
 - Exploration & Discovery
+
+
+
+## License
+
+MIT License - Use these patterns freely in your projects!
 
 
 
