@@ -2306,6 +2306,230 @@
     style End fill:#c8e6c9`
             },
             {
+                category: "System Patterns", id: "awareness", name: "Awareness",
+                difficulty: 'Advanced', applicability: ['Efficiency', 'Resource-Optimization', 'Collaboration', 'Distributed-Systems'],
+                summary: "Agents maintain internal state through attributes (intrinsic capabilities defined at creation, like DNA) and create facts about their capabilities, location, and current state in the world state. The Awareness pattern enables other agents to passively detect these facts through detectables, creating beliefs about the agent's capabilities. The agent being queried is completely passive — it simply exists with detectable facts and performs no decision-making about who queries it or how its information is used. This inhibiting pattern provides the information foundation for active patterns like Routing and Resource-Aware Optimization, which make decisions based on detected agent awareness.",
+                analogy: "It's like a temperature sensor in a smart building. The sensor continuously measures temperature and its specifications (model: DS18B20, range: -55°C to +125°C, accuracy: ±0.5°C, current reading: 22.5°C) exist as facts in the building's monitoring system. When the HVAC controller needs temperature data, it detects these facts and creates beliefs about the sensor's capabilities. The sensor doesn't decide whether it's the right sensor for the job - it simply exists with detectable properties. The HVAC controller makes routing decisions based on detected sensor awareness.",
+                hasSimplifiedDiagram: true,
+                simplifiedMermaidCode: `graph LR
+    subgraph Agent["Agent (Passive)"]
+        DNA[Has DNA/Attributes:<br/>What it IS] --> Facts[Creates Facts:<br/>What it KNOWS]
+        Facts --> Operate[Operates<br/>Continuously]
+        Operate --> Update[Updates Facts<br/>as State Changes]
+        Update --> Facts
+    end
+    
+    subgraph World["World State"]
+        FactDB[(Shared Facts<br/>Database)]
+    end
+    
+    subgraph External["External System (Active)"]
+        Query[Queries:<br/>What agents exist?] --> Detect[Detects:<br/>Finds matching facts]
+        Detect --> Decide[Decides:<br/>Which agent to use?]
+        Decide --> Act[Acts:<br/>Routes/Allocates/Optimizes]
+    end
+    
+    Facts -.->|Writes| FactDB
+    Update -.->|Updates| FactDB
+    Query -.->|Reads| FactDB
+    
+    style DNA fill:#c8e6c9
+    style Facts fill:#b2dfdb
+    style FactDB fill:#fff9c4
+    style Query fill:#fff59d
+    style Detect fill:#ffe0b2
+    style Decide fill:#f48fb1
+    style Act fill:#f06292`,
+                hasAdditionalDiagrams: true,
+                additionalDiagrams: [
+                    {
+                        title: "Information Flow Perspective",
+                        code: `graph TD
+    Agent[Agent with Awareness] --> Attributes[Attributes - DNA]
+    Agent --> State[Current State]
+    Agent --> Context[Context/Location]
+    
+    Attributes --> AttrFacts["Facts:<br/>• Capabilities<br/>• Constraints<br/>• Properties"]
+    State --> StateFacts["Facts:<br/>• Current Load<br/>• Battery Level<br/>• Task Count"]
+    Context --> ContextFacts["Facts:<br/>• Location<br/>• Network Status<br/>• Resources"]
+    
+    AttrFacts --> WorldState[(World State)]
+    StateFacts --> WorldState
+    ContextFacts --> WorldState
+    
+    WorldState --> Query[External Agent Queries]
+    
+    Query --> CapQuery{Query Type?}
+    CapQuery -->|Capabilities| DetectCap[Detect Capability Facts]
+    CapQuery -->|State| DetectState[Detect State Facts]
+    CapQuery -->|Context| DetectContext[Detect Context Facts]
+    CapQuery -->|All| DetectAll[Detect All Facts]
+    
+    DetectCap --> Decision[External Agent<br/>Makes Decision]
+    DetectState --> Decision
+    DetectContext --> Decision
+    DetectAll --> Decision
+    
+    Decision --> Action[Takes Action:<br/>Routing, Allocation, etc.]
+    
+    style Agent fill:#e1f5fe
+    style Attributes fill:#c8e6c9
+    style State fill:#c8e6c9
+    style Context fill:#c8e6c9
+    style WorldState fill:#fff9c4
+    style Query fill:#fff59d
+    style Decision fill:#f48fb1
+    style Action fill:#f06292`
+                    },
+                    {
+                        title: "Real-World Example: IoT Temperature Sensor",
+                        code: `graph TD
+    subgraph Sensor["IoT Temperature Sensor (Passive Agent)"]
+        Init[Sensor Initialized] --> DNA["DNA Attributes:<br/>• Model: DS18B20<br/>• Range: -55°C to +125°C<br/>• Accuracy: ±0.5°C"]
+        DNA --> CreateFact[Creates Facts in World State]
+        CreateFact --> Measure[Measures Temperature<br/>Continuously]
+        Measure --> UpdateFact["Updates Fact:<br/>current_reading = 22.5°C"]
+        UpdateFact --> Measure
+    end
+    
+    subgraph World["World State"]
+        Facts["Facts:<br/>• Sensor1.model = 'DS18B20'<br/>• Sensor1.range_min = -55<br/>• Sensor1.range_max = 125<br/>• Sensor1.accuracy = 0.5<br/>• Sensor1.current_reading = 22.5"]
+    end
+    
+    subgraph HVAC["HVAC Controller (Active Agent)"]
+        Need[Needs temperature data] --> Detect[Detects sensor facts]
+        Detect --> Believe["Creates Beliefs:<br/>• Sensor1 can measure -55 to 125°C<br/>• Current reading is 22.5°C<br/>• Accuracy is ±0.5°C"]
+        Believe --> Decide{Is this sensor<br/>suitable for my needs?}
+        Decide -->|Yes| Use[Use Sensor1 data]
+        Decide -->|No| FindOther[Find another sensor]
+    end
+    
+    CreateFact -.-> Facts
+    UpdateFact -.-> Facts
+    Detect -.-> Facts
+    
+    Note["Note: Sensor doesn't decide if it's suitable.<br/>HVAC Controller detects facts and decides."]
+    
+    style Init fill:#e1f5fe
+    style DNA fill:#c8e6c9
+    style CreateFact fill:#c8e6c9
+    style Measure fill:#b2dfdb
+    style Facts fill:#fff9c4
+    style Need fill:#fff59d
+    style Detect fill:#ffe0b2
+    style Believe fill:#f8bbd0
+    style Decide fill:#f48fb1
+    style Use fill:#f06292
+    style Note fill:#e8f5e9`
+                    }
+                ],
+                hasDictionary: true,
+                dictionary: {
+                    "Core Concepts": [
+                        { term: "Agent", definition: "A software entity that can act independently. Think of it like a robot or a smart device that can do things on its own. In the Awareness pattern, there are two types: passive agents (being queried) and active agents (doing the querying)." },
+                        { term: "Awareness Pattern", definition: "A design pattern where agents expose information about themselves (their capabilities, state, and context) so other systems can discover and use them. Like a business card that lists what you can do - you don't decide who hires you, but you make your skills visible." },
+                        { term: "Passive (Inhibiting)", definition: "Not taking action on its own; only responding when asked. Like a thermometer that just shows the temperature - it doesn't decide what to do about it. In the Awareness pattern, the agent being queried is passive." },
+                        { term: "Active (Imperative)", definition: "Taking action and making decisions. Like a thermostat that decides when to turn on the heater based on the temperature. In the Awareness pattern, the querying agent is active." }
+                    ],
+                    "Brahms Framework Terms": [
+                        { term: "Attributes (DNA)", definition: "The built-in characteristics an agent has from the moment it's created. Like your height, eye color, or natural talents - things that define what you ARE. For a sensor, this might be its model number, measurement range, or accuracy.", example: "A temperature sensor's DNA includes: model=\"DS18B20\", range=-55°C to +125°C, accuracy=±0.5°C" },
+                        { term: "Facts", definition: "Objective truths stored in the World State that everyone can see. Like the temperature reading on a thermometer - it's a fact that anyone can observe. Facts are different from beliefs because they're the \"ground truth.\"", example: "(Sensor1.current_reading = 22.5) is a fact in the World State" },
+                        { term: "Beliefs", definition: "What an agent thinks is true based on what it has detected. Different agents can have different beliefs about the same thing. Like two people might have different opinions about whether 22°C is warm or cold.", example: "HVAC Controller believes (Sensor1.current_reading = 22.5) after detecting the fact" },
+                        { term: "Detectables", definition: "The mechanism an agent uses to find and read facts from the World State. Like using your eyes to read a thermometer. It's a query pattern that says \"find me facts that match this description.\"", example: "detect (Sensor1.temperature = anyvalue) means \"find the temperature fact for Sensor1\"" },
+                        { term: "World State", definition: "A shared database where all facts are stored. Every agent can write facts to it and read facts from it. Like a bulletin board where everyone posts information and anyone can read it.", example: "Contains facts like (Sensor1.model = \"DS18B20\"), (Sensor1.reading = 22.5)" },
+                        { term: "BDI (Belief-Desire-Intention)", definition: "A framework for building intelligent agents. Beliefs are what the agent knows, Desires are what it wants to achieve, and Intentions are the plans it commits to. The Awareness pattern focuses on the Beliefs part." }
+                    ],
+                    "Pattern-Specific Terms": [
+                        { term: "Capability Awareness", definition: "Information about what an agent CAN do. Like listing your skills on a resume - programming, design, languages you speak.", example: "\"I can sort arrays using bubble sort, optimal for arrays with less than 100 elements\"" },
+                        { term: "State Awareness", definition: "Information about an agent's current condition. Like saying \"I'm busy right now\" or \"I have 50% battery left.\"", example: "\"My current load is 75%\", \"I have processed 1,247 requests today\"" },
+                        { term: "Context Awareness", definition: "Information about an agent's environment and situation. Like knowing where you are, what resources you have access to, or what time it is.", example: "\"I am located on Mars\", \"Communication delay to Earth is 8 minutes\"" },
+                        { term: "Query", definition: "A request for information. When an external agent wants to know about other agents, it sends a query. Like asking \"Who can help me with this task?\"" },
+                        { term: "Detection", definition: "The process of finding and reading facts from the World State. Like looking at a dashboard to see the status of all your devices." },
+                        { term: "Routing", definition: "A different pattern (NOT Awareness) where an agent actively decides which agent should handle a task and sends the task there. Like a receptionist directing you to the right department." }
+                    ],
+                    "Comparison Terms": [
+                        { term: "Inhibiting Pattern", definition: "A pattern where the agent waits to be asked before doing anything. Reactive, not proactive. Like a library book that sits on the shelf until someone checks it out." },
+                        { term: "Imperative Pattern", definition: "A pattern where the agent takes initiative and makes decisions. Proactive, not reactive. Like a personal assistant who anticipates your needs and takes action." },
+                        { term: "Passive Exposure", definition: "Making information available without actively pushing it or making decisions about it. Like having a website with your contact info - you're not calling people, but they can find you." },
+                        { term: "Active Decision-Making", definition: "Evaluating options and choosing what to do. Like a manager deciding which employee to assign to a project." }
+                    ],
+                    "Technical Terms": [
+                        { term: "Workframe", definition: "In Brahms, a workframe defines when and how an agent performs activities. This is part of ACTIVE behavior, NOT Awareness. Think of it as a to-do list with conditions: \"When X happens, do Y.\"" },
+                        { term: "Thoughtframe", definition: "In Brahms, a thoughtframe defines how an agent reasons and makes inferences. This is part of ACTIVE behavior, NOT Awareness. Think of it as logical rules: \"If I know X and Y, then I can conclude Z.\"" },
+                        { term: "Continuous Operation", definition: "Running all the time without stopping. Like your heart beating - it doesn't wait for permission, it just keeps going. Agents with Awareness continuously update their facts." },
+                        { term: "Pattern Matching", definition: "Finding things that fit a specific description. Like searching for \"all files ending in .txt\" - you're matching files against a pattern." }
+                    ],
+                    "Real-World Analogies": [
+                        { term: "Temperature Sensor (Passive Agent)", definition: "A thermometer that continuously measures temperature and displays it. It doesn't decide if the room is too hot or too cold - it just shows the temperature. Other systems (like a thermostat) read the temperature and make decisions." },
+                        { term: "HVAC Controller (Active Agent)", definition: "A smart thermostat that reads temperature sensors, decides if the room is too hot or cold, and turns on heating or cooling. It's actively making decisions based on information from sensors." },
+                        { term: "Medical Directory (Awareness)", definition: "A directory listing doctors with their specialties, office hours, and contact info. The directory doesn't decide which doctor you should see - it just provides information so you can decide." },
+                        { term: "Receptionist (Routing)", definition: "A receptionist who listens to your problem and decides which doctor you should see, then directs you there. The receptionist is actively making decisions and routing you." }
+                    ],
+                    "Common Phrases Explained": [
+                        { term: "\"Agent just EXISTS with facts\"", definition: "The agent doesn't do anything special when queried - it's always there with its information available, like a sign on a building that's always visible." },
+                        { term: "\"External agent DETECTS, BELIEVES, DECIDES\"", definition: "The querying agent actively: (1) looks for information (detects), (2) understands what it found (believes), and (3) chooses what to do (decides)." },
+                        { term: "\"Looks to the outside from within\"", definition: "The agent exposes its internal state to the outside world. Like having a window into a room - people outside can see in, but the room doesn't change based on who's looking." },
+                        { term: "\"Inhibiting nature\"", definition: "The pattern is reactive, not proactive. The agent waits to be queried rather than pushing information or making decisions." },
+                        { term: "\"DNA of the agent\"", definition: "The fundamental characteristics that define what the agent is, set when it's created and rarely changed. Like your genetic code determines your eye color." }
+                    ]
+                },
+                whenToUse: ["Systems requiring agents to expose their intrinsic capabilities as detectable facts", "Multi-agent environments where routing decisions need to query agent state", "Distributed systems where agents must report location and context as world facts", "Resource optimization systems that detect agent capacity and load", "Monitoring systems that need to perceive agent capabilities and status", "Service discovery mechanisms that detect available agent capabilities", "Systems implementing the Brahms facts/detectables architecture"],
+                whereItFits: ["IoT sensor networks where sensors expose capabilities as detectable facts", "Microservices exposing health/capability endpoints as queryable state", "Distributed agents creating facts about location and communication constraints", "Algorithm libraries advertising complexity and optimal use cases as attributes", "Worker agents exposing current load and processing capacity as world facts", "Specialized agents declaring domain expertise through detectable attributes", "NASA rover operations where agents expose location/capability facts for mission control to detect"],
+                pros: ["Enables informed routing and resource allocation by other agents/systems", "Provides foundation for service discovery through fact detection", "Allows external systems to match tasks to agents based on detected capabilities", "Facilitates monitoring and observability through detectable state", "Supports dynamic system adaptation based on detected agent facts", "Reduces coupling - agents don't need to know about each other, just expose facts", "Simple to implement - just attribute/fact declaration, no decision logic", "Aligns with Brahms BDI architecture (beliefs, facts, detectables)"],
+                cons: ["Requires agents to maintain accurate attribute definitions and facts", "State facts can become stale if not updated frequently", "Detecting facts from many agents can add latency to querying systems", "Agents must expose potentially sensitive capability information as world facts", "Requires standardized attribute schema for fact detection", "Overhead of maintaining and updating world facts", "External systems must implement detectables to perceive agent awareness", "No built-in access control for fact visibility in basic Brahms model"],
+                realWorldExamples: [
+                    '<li><strong>IoT Temperature Sensor Network (Brahms-style):</strong><ul><li>Sensor attributes (DNA): model="DS18B20", range_min=-55°C, range_max=125°C, accuracy=±0.5°C</li><li>Sensor creates facts: (Sensor1.model = "DS18B20"), (Sensor1.current_reading = 22.5)</li><li>Monitoring system detects facts via detectables</li><li>System creates beliefs about sensor capabilities</li><li>System decides which sensor to use (NOT the sensor)</li><li>Sensor continues measuring regardless of queries</li></ul></li>',
+                    '<li><strong>Microservices Health Endpoints (Brahms-style):</strong><ul><li>Service attributes: version="2.1.0", max_load=1000, capabilities=["auth", "user-mgmt"]</li><li>Service creates facts: (AuthService.current_load = 450), (AuthService.response_time = 20ms)</li><li>Load balancer detects facts through health endpoint queries</li><li>Load balancer creates beliefs about service state</li><li>Load balancer decides routing (NOT the service)</li><li>Service just exposes facts - no routing logic</li></ul></li>',
+                    '<li><strong>Algorithm Library with Metadata (Brahms-style):</strong><ul><li>BubbleSort attributes: time_complexity="O(n²)", space_complexity="O(1)", stable=true, optimal_for="n<100"</li><li>QuickSort attributes: time_complexity="O(n log n)", space_complexity="O(log n)", stable=false, optimal_for="n>100"</li><li>Algorithm selector detects these attribute facts</li><li>Selector creates beliefs about algorithm properties</li><li>Selector decides which algorithm to use based on data size</li><li>Algorithms don\'t choose themselves - they expose properties</li></ul></li>',
+                    '<li><strong>Distributed Worker Pool (Brahms-style):</strong><ul><li>Worker attributes: cpu_cores=4, memory=8GB, supported_jobs=["video-encode", "image-process"]</li><li>Worker creates facts: (Worker3.current_load = 60%), (Worker3.active_tasks = 2)</li><li>Job scheduler detects worker facts via detectables</li><li>Scheduler creates beliefs about worker availability</li><li>Scheduler decides task assignment (NOT the worker)</li><li>Workers execute tasks and update facts - no assignment logic</li></ul></li>',
+                    '<li><strong>Mars Rover Communication (Brahms-style):</strong><ul><li>Agent A attributes: location="Earth orbit", comm_delay_to_earth=0.1sec, comm_delay_to_mars=8min, capabilities=["data-sync", "compute"]</li><li>Agent B attributes: location="Mars orbit", comm_delay_to_earth=8min, comm_delay_to_mars=0.1sec, capabilities=["data-sync", "compute"]</li><li>Both agents create facts about their location and communication delays</li><li>Agent A detects facts from both agents via detectables</li><li>Agent A creates beliefs: "I am closer to Earth, B is closer to Mars"</li><li>Agent A decides: if task requires time-critical data sync with Mars, delegate to Agent B</li><li>Agent B performs task, syncs data quickly with Mars, returns results to Agent A</li><li>Agents expose facts passively - Agent A makes routing decisions based on detected awareness</li></ul></li>',
+                    '<li><strong>Smart Factory Robot Fleet (Brahms-style):</strong><ul><li>Robot attributes: tool_attachments=["drill", "welder"], max_reach=2m, location="Floor2"</li><li>Robot creates facts: (Robot5.battery = 70%), (Robot5.current_task = "welding"), (Robot5.maintenance_due = false)</li><li>Task allocation system detects robot facts</li><li>System creates beliefs about robot capabilities and status</li><li>System decides task assignments based on detected facts</li><li>Robots report state continuously - central system makes decisions</li></ul></li>'
+                ],
+                mermaidCode: `graph TD
+				subgraph PassiveAgent["Agent Being Queried - PASSIVE (Inhibiting)"]
+					Start[Agent Initialized] --> DefineAttr["Define Attributes (DNA)<br/>• Capabilities<br/>• Constraints<br/>• Properties"]
+					DefineAttr --> CreateFacts[Create Initial Facts<br/>in World State]
+					CreateFacts --> ContinuousOp[Perform Core Function<br/>Continuously]
+					ContinuousOp --> UpdateFacts[Update Facts Based<br/>on State Changes]
+					UpdateFacts --> ContinuousOp
+				end
+				
+				subgraph WorldState["World State - SHARED FACTS"]
+					FactStore[(World Facts:<br/>• Agent.capability = X<br/>• Agent.location = Y<br/>• Agent.state = Z)]
+				end
+				
+				subgraph ActiveAgent["Querying Agent - ACTIVE (Imperative)"]
+					Query[External Agent<br/>Queries Awareness] --> Detectable[Uses Detectable<br/>to Query Facts]
+					Detectable --> DetectFacts{Facts Match<br/>Detectable Pattern?}
+					DetectFacts -->|Yes| CreateBelief[Creates Beliefs<br/>from Detected Facts]
+					DetectFacts -->|No| NoMatch[No Beliefs Created<br/>Query Failed]
+					CreateBelief --> ExternalDecision[Makes Decision<br/>Based on Beliefs]
+					ExternalDecision --> ExternalAction[Takes Action:<br/>• Routing<br/>• Resource Allocation<br/>• Optimization]
+					NoMatch --> End[Query Complete]
+					ExternalAction --> End[Query Complete]
+				end
+				
+				CreateFacts -.->|Writes| FactStore
+				UpdateFacts -.->|Updates| FactStore
+				Detectable -.->|Reads| FactStore
+				
+				Note1["Key Distinction:<br/>Passive agent just EXISTS with facts<br/>Active agent DETECTS, BELIEVES, DECIDES"]
+				
+				style Start fill:#e1f5fe
+				style DefineAttr fill:#c8e6c9
+				style CreateFacts fill:#c8e6c9
+				style ContinuousOp fill:#b2dfdb
+				style UpdateFacts fill:#b2dfdb
+				style FactStore fill:#fff9c4
+				style Query fill:#fff59d
+				style Detectable fill:#ffe0b2
+				style DetectFacts fill:#ffcc80
+				style CreateBelief fill:#f8bbd0
+				style ExternalDecision fill:#f48fb1
+				style ExternalAction fill:#f06292
+				style Note1 fill:#e8f5e9`
+            },
+            {
                 category: "Optimization Patterns", id: "resource-aware-optimization", name: "Resource-Aware Optimization",
                 difficulty: 'Advanced', applicability: ['Cost-Saving', 'Performance', 'Efficiency'],
                 summary: "Analyze a task's complexity and route it to the most appropriate resource. Simple tasks use cheap, fast models, while complex tasks use powerful, expensive models to balance cost and quality.",
@@ -2968,6 +3192,20 @@
                 problem: "A pharmaceutical company needs to identify new drug targets and potential compounds. The traditional research process is slow and often misses novel connections between biological systems and potential treatments.",
                 solution: "A research discovery platform was created to systematically explore vast scientific knowledge spaces. The system uses (<strong>Exploration & Discovery</strong>) to broadly scan scientific literature, patents, and experimental data across multiple disciplines. It identifies patterns and connections between different biological systems, then clusters related findings to reveal promising research areas. The platform performs deep dives into the most promising clusters, generating hypotheses for new drug targets and suggesting experimental approaches. This has led to discoveries of novel compound interactions and identified potential treatments for diseases where traditional approaches had plateaued.",
                 patterns: ["Exploration & Discovery"]
+            },
+            {
+                id: "case-study-smart-building",
+                name: "Smart Building Energy Management",
+                problem: "A large office building with hundreds of IoT sensors (temperature, occupancy, light levels, HVAC units) struggles with energy efficiency. The building management system lacks intelligent coordination, leading to wasted energy from heating empty rooms, cooling conflicts between zones, and inability to predict maintenance needs. Energy costs are high and tenant comfort complaints are frequent.",
+                solution: "An intelligent energy management system was implemented using the Awareness pattern as its foundation. Each IoT device has DNA attributes defining its capabilities: sensor type, location, measurement range, accuracy, and power consumption (<strong>Awareness</strong>). Devices continuously create facts in the world state about their current readings, battery levels, operational status, and last maintenance date. The central energy management system detects these facts via queries and creates beliefs about the building's state. Based on detected awareness, the system routes optimization decisions (<strong>Routing</strong>) to appropriate controllers. For example, when occupancy sensors report empty conference rooms, the system detects these facts and routes commands to reduce HVAC and lighting in those zones. The system uses resource-aware optimization (<strong>Resource-Aware Optimization</strong>) to balance energy costs against comfort requirements, detecting which HVAC units have capacity and which are operating at peak efficiency. Goal setting and monitoring (<strong>Goal Setting & Monitoring</strong>) tracks energy reduction targets and comfort metrics. The devices remain completely passive—they simply expose their state as facts. The management system actively detects, believes, and decides all optimization actions. This has resulted in 30% energy cost reduction while improving tenant comfort scores.",
+                patterns: ["Awareness", "Routing", "Resource-Aware Optimization", "Goal Setting & Monitoring"]
+            },
+            {
+                id: "case-study-robot-fleet",
+                name: "Autonomous Delivery Robot Fleet",
+                problem: "A warehouse uses 50 autonomous robots for package delivery but struggles with efficient task allocation. Robots are manually assigned tasks without considering their current battery levels, locations, or cargo capacity. This leads to failed deliveries when robots run out of battery mid-route, inefficient routing with robots traveling across the warehouse unnecessarily, and uneven workload distribution causing some robots to be overworked while others sit idle.",
+                solution: "A fleet management system was built using the Awareness pattern for intelligent task allocation. Each robot has DNA attributes defining its intrinsic capabilities: maximum payload capacity, battery capacity, navigation capabilities, and sensor suite (<strong>Awareness</strong>). Robots continuously create facts about their current state: location, battery level, cargo status, whether maintenance is due, and current task. The fleet management system detects these facts via telemetry and creates beliefs about robot availability and suitability for incoming tasks. When a new delivery task arrives, the system uses routing (<strong>Routing</strong>) to analyze task requirements and detect which robots have the necessary capabilities. It then uses prioritization (<strong>Prioritization</strong>) to rank tasks by urgency and value, ensuring critical deliveries are handled first. The system implements goal setting and monitoring (<strong>Goal Setting & Monitoring</strong>) to track delivery targets, battery usage efficiency, and maintenance schedules. Exception handling (<strong>Exception Handling & Recovery</strong>) manages scenarios where robots encounter obstacles or battery levels drop unexpectedly—the system detects the changed facts and reassigns tasks to other available robots. The robots themselves are completely passive—they execute assigned tasks and update their state facts. The fleet manager actively detects robot awareness, creates beliefs about optimal assignments, and decides task allocation. This approach has increased delivery efficiency by 45%, reduced battery-related failures by 80%, and improved robot utilization from 60% to 85%.",
+                patterns: ["Awareness", "Routing", "Prioritization", "Goal Setting & Monitoring", "Exception Handling & Recovery"]
             }
         ];
 
@@ -2993,14 +3231,15 @@
                     P13("Human-in-the-Loop"):::clickable
                     P14("Knowledge Retrieval RAG"):::clickable
                     P15("Inter-Agent Communication"):::clickable
+                    P16("Awareness"):::clickable
                 end
                 subgraph "Optimization & Strategic"
-                    P16("Resource-Aware Optimization"):::clickable
-                    P17("Reasoning Techniques"):::clickable
-                    P18("Guardrails & Safety"):::clickable
-                    P19("Evaluation & Monitoring"):::clickable
-                    P20("Prioritization"):::clickable
-                    P21("Exploration & Discovery"):::clickable
+                    P17("Resource-Aware Optimization"):::clickable
+                    P18("Reasoning Techniques"):::clickable
+                    P19("Guardrails & Safety"):::clickable
+                    P20("Evaluation & Monitoring"):::clickable
+                    P21("Prioritization"):::clickable
+                    P22("Exploration & Discovery"):::clickable
                 end
                 
                 P7 -- "requires" --> P15
@@ -3009,17 +3248,22 @@
                 P6 -- "can be composed of" --> P1
                 P6 -- "often requires" --> P5
                 P14 -- "is a form of" --> P5
-                P2 -- "is used by" --> P16
-                P4 -- "is a form of" --> P19
+                P2 -- "is used by" --> P17
+                P4 -- "is a form of" --> P20
                 P9 -- "is enabled by" --> P13
-                P13 -- "is triggered by" --> P18
+                P13 -- "is triggered by" --> P19
                 P13 -- "is triggered by" --> P12
-                P17 -- "can be improved by" --> P4
-                P21 -- "is a form of" --> P6
+                P18 -- "can be improved by" --> P4
+                P22 -- "is a form of" --> P6
                 P1 -- "often needs" --> P12
+                P6 -- "detects" --> P16
+                P17 -- "detects" --> P16
+                P7 -- "detects" --> P16
+                P16 -- "provides facts for" --> P6
+                P16 -- "provides facts for" --> P17
                 
                 classDef clickable fill:#36393f,stroke:#61dafb,color:#fff;
-                class P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14,P15,P16,P17,P18,P19,P20,P21 clickable;
+                class P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14,P15,P16,P17,P18,P19,P20,P21,P22 clickable;
         `;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -3079,6 +3323,45 @@
                 const difficultyTag = `<span class="tag difficulty-tag difficulty-${pattern.difficulty.toLowerCase()}">${pattern.difficulty}</span>`;
                 const applicabilityTags = pattern.applicability.map(tag => `<span class="tag applicability-tag">${tag}</span>`).join('');
 
+                // Build simplified diagram section if available
+                let simplifiedDiagramHtml = '';
+                if (pattern.hasSimplifiedDiagram && pattern.simplifiedMermaidCode) {
+                    simplifiedDiagramHtml = `
+                        <h3 class="section-title">Simplified Conceptual Overview</h3>
+                        <div class="mermaid" id="mermaid-simplified">${pattern.simplifiedMermaidCode.trim()}</div>`;
+                }
+
+                // Build additional diagrams section if available
+                let additionalDiagramsHtml = '';
+                if (pattern.hasAdditionalDiagrams && pattern.additionalDiagrams) {
+                    additionalDiagramsHtml = pattern.additionalDiagrams.map((diagram, index) => `
+                        <h3 class="section-title">${diagram.title}</h3>
+                        <div class="mermaid" id="mermaid-additional-${index}">${diagram.code.trim()}</div>
+                    `).join('');
+                }
+
+                // Build dictionary section if available
+                let dictionaryHtml = '';
+                if (pattern.hasDictionary && pattern.dictionary) {
+                    dictionaryHtml = '<h3 class="section-title">Dictionary</h3><div class="real-world-examples">';
+                    for (const [category, terms] of Object.entries(pattern.dictionary)) {
+                        dictionaryHtml += `<h4 style="color: var(--accent-color); margin-top: 30px; margin-bottom: 15px;">${category}</h4><ul>`;
+                        terms.forEach(item => {
+                            let termHtml = `<li><strong>${item.term}</strong><p>${item.definition}</p>`;
+                            if (item.example) {
+                                termHtml += `<p style="margin-top: 10px;"><em>Example:</em> ${item.example}</p>`;
+                            }
+                            termHtml += '</li>';
+                            dictionaryHtml += termHtml;
+                        });
+                        dictionaryHtml += '</ul>';
+                    }
+                    dictionaryHtml += '</div>';
+                }
+
+                // Use different title for Awareness pattern
+                const diagramTitle = pattern.id === 'awareness' ? 'Complete Brahms Implementation Diagram' : 'Diagram';
+
                 displayContainer.innerHTML = `
                     <div class="pattern-header">
                         <h2>${pattern.name}</h2>
@@ -3086,8 +3369,11 @@
                     </div>
                     <p class="pattern-summary">${pattern.summary}</p>
                     <div class="pattern-analogy"><strong>Analogy</strong><p>${pattern.analogy}</p></div>
-                    <h3 class="section-title">Diagram</h3>
+                    ${simplifiedDiagramHtml}
+                    <h3 class="section-title">${diagramTitle}</h3>
                     <div class="mermaid" id="mermaid-diagram">${pattern.mermaidCode.trim()}</div>
+                    ${additionalDiagramsHtml}
+                    <div style="margin-top: 40px;"></div>
                     <div class="two-column-grid">
                         <div class="grid-item">
                             <h3 class="section-title">When to Use</h3>
@@ -3103,18 +3389,22 @@
                         <div class="grid-item cons"><h3>Cons</h3><ul>${pattern.cons.map(item => `<li>${item}</li>`).join('')}</ul></div>
                     </div>
                     <h3 class="section-title">Real-World Examples</h3>
-                    <div class="real-world-examples"><ul>${pattern.realWorldExamples.join('')}</ul></div>`;
+                    <div class="real-world-examples"><ul>${pattern.realWorldExamples.join('')}</ul></div>
+                    ${dictionaryHtml}`;
 
-                const mermaidContainer = document.getElementById('mermaid-diagram');
-                if (mermaidContainer) {
+                // Render all mermaid diagrams
+                const mermaidContainers = displayContainer.querySelectorAll('.mermaid');
+                if (mermaidContainers.length > 0) {
                     try {
-                        await mermaid.run({ nodes: [mermaidContainer] });
+                        await mermaid.run({ nodes: Array.from(mermaidContainers) });
                         // Small delay to ensure SVG is fully rendered
                         setTimeout(() => {
                             initializeDiagramZoom();
                         }, 100);
                     } catch (error) {
-                        mermaidContainer.innerHTML = '<p style="color: var(--con-color); padding: 20px;">Error loading diagram. Please refresh the page.</p>';
+                        mermaidContainers.forEach(container => {
+                            container.innerHTML = '<p style="color: var(--con-color); padding: 20px;">Error loading diagram. Please refresh the page.</p>';
+                        });
                         console.error('Mermaid rendering error:', error);
                     }
                 }
@@ -3161,7 +3451,7 @@
                     P1: 'prompt-chaining', P2: 'routing', P3: 'parallelization', P4: 'reflection', P5: 'tool-use',
                     P6: 'planning', P7: 'multi-agent-collaboration', P8: 'memory-management', P9: 'learning-and-adaptation', P10: 'model-context-protocol',
                     P11: 'goal-setting-and-monitoring', P12: 'exception-handling-and-recovery', P13: 'human-in-the-loop', P14: 'knowledge-retrieval-rag', P15: 'inter-agent-communication-a2a',
-                    P16: 'resource-aware-optimization', P17: 'reasoning-techniques', P18: 'guardrails-safety-patterns', P19: 'evaluation-and-monitoring', P20: 'prioritization', P21: 'exploration-and-discovery'
+                    P16: 'awareness', P17: 'resource-aware-optimization', P18: 'reasoning-techniques', P19: 'guardrails-safety-patterns', P20: 'evaluation-and-monitoring', P21: 'prioritization', P22: 'exploration-and-discovery'
                 };
 
                 const graphContainer = document.getElementById('relationship-graph');
@@ -3170,17 +3460,29 @@
                         await mermaid.run({ nodes: [graphContainer] });
                         setTimeout(() => {
                             initializeDiagramZoom();
-                        }, 100);
 
-                        // Add click handlers after rendering
-                        Object.keys(patternIdMap).forEach(nodeId => {
-                            const nodeElement = graphContainer.querySelector(`[id^=${nodeId}]`);
-                            if (nodeElement) {
-                                nodeElement.addEventListener('click', () => {
-                                    window.location.hash = patternIdMap[nodeId];
-                                });
-                            }
-                        });
+                            // Add click handlers after rendering - wait for SVG to be ready
+                            setTimeout(() => {
+                                const svg = graphContainer.querySelector('svg');
+                                if (svg) {
+                                    // Find all node elements (rectangles with text)
+                                    Object.keys(patternIdMap).forEach(nodeId => {
+                                        // Mermaid creates nodes with IDs like "flowchart-P1-123"
+                                        // We need to find elements that contain our node ID
+                                        const nodes = svg.querySelectorAll(`[id*="${nodeId}-"]`);
+                                        nodes.forEach(node => {
+                                            // Make the node clickable
+                                            node.style.cursor = 'pointer';
+                                            node.addEventListener('click', (e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                window.location.hash = patternIdMap[nodeId];
+                                            });
+                                        });
+                                    });
+                                }
+                            }, 200);
+                        }, 100);
                     } catch (error) {
                         graphContainer.innerHTML = '<p style="color: var(--con-color); padding: 20px;">Error loading relationship diagram. Please refresh the page.</p>';
                         console.error('Mermaid rendering error:', error);
@@ -3196,7 +3498,7 @@
                         <h2>About This Tutorial</h2>
                     </div>
                     <div class="info-section">
-                        <p>This is a comprehensive interactive tutorial on 21 essential agentic design patterns for building intelligent AI systems. It is designed to make complex architectural concepts accessible through simple visual representations and clear, jargon-free explanations.</p>
+                        <p>This is a comprehensive interactive tutorial on 22 essential agentic design patterns for building intelligent AI systems. It is designed to make complex architectural concepts accessible through simple visual representations and clear, jargon-free explanations.</p>
                         <h3>What's Included</h3>
                         <ul>
                             <li><strong>Visual Mermaid Diagrams:</strong> Flowcharts in plain English showing how each pattern works.</li>
@@ -3205,8 +3507,9 @@
                         </ul>
                         <h3>Credits</h3>
                         <p>The patterns and diagrams are distilled from extensive research on agentic AI systems. For more information visit the following links:</p>
-                        <p><a href="https://github.com/promptadvisers/agentic-design-patterns-docs" target="_blank" rel="noopener noreferrer">https://github.com/promptadvisers/agentic-design-patterns-docs</a></p>
-                        <p><a href="https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018" target="_blank" rel="noopener noreferrer">https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018</a></p>
+                        <p><a href="https://github.com/promptadvisers/agentic-design-patterns-docs" target="_blank" rel="noopener noreferrer">Agentic Design Patterns Documentation (by Prompt Advisers)</a></p>
+                        <p><a href="https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018" target="_blank" rel="noopener noreferrer">Agentic Design Patterns: A Hands-On Guide to Building Intelligent Systems (by Antonio Gullí)</a></p>
+                        <p><a href="https://www.researchgate.net/publication/238675575_Brahms_A_multi-agent_modelling_environment_for_simulating_work_processes_and_practices" target="_blank" rel="noopener noreferrer">Brahms: A multi-agent modelling environment for simulating work processes and practices (by Maarten Sierhuis and Ron J. J. van Hoof). Special thanks to user Thaddy in Lazarus forum.</a></p>
                     </div>
                 `;
             };

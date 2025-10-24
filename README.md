@@ -9,7 +9,7 @@ This repository contains an interactive, single-file tutorial on 21 essential ag
 The included `index.html` file is a self-contained web page that provides a comprehensive guide to various patterns used in modern AI development. It's designed to make complex architectural concepts accessible through simple visual representations, detailed explanations, and real-world examples.
 
 ### Online Use
-Open https://zeljkoavramovic.github.io/agentic-design-patterns/ in your browser
+Open https://zeljkoavramovic.github.io/agentic-design-patterns/ in your browser.
 
 ### Offline Use
 Simply download the `index.html` file and open it in any modern web browser. No internet connection is required after the initial download.
