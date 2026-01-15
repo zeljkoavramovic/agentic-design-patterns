@@ -19,7 +19,7 @@
             --code-bg: #282c34;
             --pro-color: #4caf50;
             --con-color: #f44336;
-            --difficulty-foundational: #4caf50;
+            --difficulty-basic: #4caf50;
             --difficulty-intermediate: #2196f3;
             --difficulty-advanced: #ff9800;
         }
@@ -49,7 +49,7 @@
         }
 
         #sidebar {
-            width: 300px;
+            width: 330px;
             background-color: var(--sidebar-bg);
             padding: 0;
             overflow-y: auto;
@@ -118,8 +118,8 @@
             flex-shrink: 0;
         }
 
-        .difficulty-foundational {
-            background-color: var(--difficulty-foundational);
+        .difficulty-basic {
+            background-color: var(--difficulty-basic);
         }
 
         .difficulty-intermediate {
@@ -508,11 +508,14 @@
 
         .mermaid.zoomed {
             touch-action: none;
-            cursor: grab;
         }
 
         .mermaid.zoomed.dragging {
-            cursor: grabbing;
+            cursor: move;
+        }
+
+        .mermaid.dragging {
+            cursor: ew-resize;
         }
 
         .mermaid-container {
@@ -526,9 +529,16 @@
 
         .mermaid-container.zoomed {
             touch-action: none;
-            cursor: grab;
             user-select: none;
             -webkit-user-select: none;
+        }
+
+        .mermaid-container.zoomed.dragging {
+            cursor: move;
+        }
+
+        .mermaid-container.dragging {
+            cursor: ew-resize;
         }
 
         .mermaid-container * {
@@ -538,10 +548,6 @@
         .mermaid-container .zoom-controls,
         .mermaid-container .zoom-btn {
             max-width: none;
-        }
-
-        .mermaid-container.zoomed {
-            cursor: grabbing;
         }
 
         .zoom-controls {
@@ -974,6 +980,29 @@
                 container.style.touchAction = 'none';
                 svg.style.touchAction = 'none';
 
+                // Check if diagram is horizontally cropped
+                function isCropped() {
+                    const svgRect = svg.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    // Allow small tolerance for rounding errors
+                    return svgRect.width > containerRect.width + 1;
+                }
+
+                // Update cropped state and classes
+                function updateCroppedState() {
+                    if (isCropped()) {
+                        container.classList.add('cropped');
+                        mermaidDiv.classList.add('cropped');
+                    } else {
+                        container.classList.remove('cropped');
+                        mermaidDiv.classList.remove('cropped');
+                    }
+                }
+
+                // Initial check and update on resize
+                updateCroppedState();
+                window.addEventListener('resize', updateCroppedState);
+
                 function updateTransform() {
                     svg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
                     svg.style.transformOrigin = 'center center';
@@ -992,11 +1021,13 @@
                 // Zoom functions
                 const doZoomIn = () => {
                     scale = Math.min(scale * 1.2, 5);
+                    updateCroppedState();
                     updateTransform();
                 };
 
                 const doZoomOut = () => {
                     scale = Math.max(scale / 1.2, 0.5);
+                    updateCroppedState();
                     updateTransform();
                 };
 
@@ -1004,6 +1035,7 @@
                     scale = 1;
                     translateX = 0;
                     translateY = 0;
+                    updateCroppedState(); // Re-check cropped state
                     updateTransform();
                 };
 
@@ -1056,8 +1088,8 @@
                 mermaidDiv.addEventListener('mousedown', (e) => {
                     if (e.target.closest('.zoom-controls')) return;
 
-                    // Only enable dragging if zoomed in
-                    if (scale > 1.01) {
+                    // Enable dragging if zoomed in OR if diagram is cropped at default zoom
+                    if (scale > 1.01 || (scale === 1 && isCropped())) {
                         isDragging = true;
                         startX = e.clientX - translateX;
                         startY = e.clientY - translateY;
@@ -1067,9 +1099,16 @@
                 });
 
                 document.addEventListener('mousemove', (e) => {
-                    if (!isDragging || scale <= 1.01) return;
-                    translateX = e.clientX - startX;
-                    translateY = e.clientY - startY;
+                    if (!isDragging) return;
+
+                    // If cropped at default zoom, only allow horizontal drag
+                    if (scale === 1 && isCropped()) {
+                        translateX = e.clientX - startX;
+                        // Keep translateY at 0 for cropped diagrams
+                    } else if (scale > 1.01) {
+                        translateX = e.clientX - startX;
+                        translateY = e.clientY - startY;
+                    }
                     updateTransform();
                 });
 
@@ -1098,15 +1137,15 @@
                     hasMoved = false;
 
                     if (e.touches.length === 1) {
-                        // Only enable dragging if zoomed in
-                        if (scale > 1.01) {
+                        // Enable dragging if zoomed in OR if diagram is cropped at default zoom
+                        if (scale > 1.01 || (scale === 1 && isCropped())) {
                             isDragging = true;
                             startX = e.touches[0].clientX - translateX;
                             startY = e.touches[0].clientY - translateY;
                             container.classList.add('dragging');
                             mermaidDiv.classList.add('dragging');
                         }
-                        // If scale = 1, don't set isDragging, let page scroll naturally
+                        // If scale = 1 and not cropped, don't set isDragging, let page scroll naturally
                     } else if (e.touches.length === 2) {
                         // Two fingers - pinch zoom (always enabled)
                         isDragging = false;
@@ -1132,23 +1171,35 @@
 
 
                 const handleTouchMove = (e) => {
-                    // Only prevent default if we're zoomed in and dragging, or pinch zooming
-                    if ((isDragging && scale > 1.01) || e.touches.length === 2) {
+                    // Only prevent default if we're zoomed in and dragging, cropped and dragging, or pinch zooming
+                    if ((isDragging && (scale > 1.01 || (scale === 1 && isCropped()))) || e.touches.length === 2) {
                         e.preventDefault();
                         hasMoved = true;
                     }
-                    // If scale = 1, don't preventDefault, allow page scroll
+                    // If scale = 1 and not cropped, don't preventDefault, allow page scroll
 
-                    if (e.touches.length === 1 && isDragging && scale > 1.01) {
-                        // Single finger drag (only when zoomed)
-                        const newX = e.touches[0].clientX - startX;
-                        const newY = e.touches[0].clientY - startY;
+                    if (e.touches.length === 1 && isDragging) {
+                        // Single finger drag (when zoomed or cropped)
+                        if (scale === 1 && isCropped()) {
+                            // Horizontal-only drag for cropped diagrams at default zoom
+                            const newX = e.touches[0].clientX - startX;
+                            // Only update if there's actual movement
+                            if (Math.abs(newX - translateX) > 1) {
+                                translateX = newX;
+                                // Keep translateY at 0 for cropped diagrams
+                                updateTransform();
+                            }
+                        } else if (scale > 1.01) {
+                            // Full drag when zoomed
+                            const newX = e.touches[0].clientX - startX;
+                            const newY = e.touches[0].clientY - startY;
 
-                        // Only update if there's actual movement
-                        if (Math.abs(newX - translateX) > 1 || Math.abs(newY - translateY) > 1) {
-                            translateX = newX;
-                            translateY = newY;
-                            updateTransform();
+                            // Only update if there's actual movement
+                            if (Math.abs(newX - translateX) > 1 || Math.abs(newY - translateY) > 1) {
+                                translateX = newX;
+                                translateY = newY;
+                                updateTransform();
+                            }
                         }
                     } else if (e.touches.length === 2) {
                         // Two finger pinch zoom (always enabled)
@@ -1221,9 +1272,9 @@
         const patternsData = [
             {
                 category: "Core Patterns", id: "prompt-chaining", name: "Prompt Chaining",
-                difficulty: 'Foundational', applicability: ['Workflow', 'Reliability', 'Data Transformation'],
+                difficulty: 'Basic', applicability: ['Workflow', 'Reliability', 'Data Transformation'],
                 summary: "Break a big task into smaller, sequential steps, where the output of one step becomes the input for the next, with validation at each stage.",
-                analogy: "Think of it like an assembly line. Each station completes its part, checks the quality, and then hands it off to the next station. This ensures errors are caught early.",
+                analogy: "It's like an assembly line. Each station completes its part, checks the quality, and then hands it off to the next station. This ensures errors are caught early.",
                 whenToUse: ["When you need to break down a complex task into discrete, manageable steps", "When information needs to be processed through multiple stages with different requirements", "When each step's output must meet specific criteria before proceeding", "When you need clear visibility into each stage of processing", "When combining LLM calls with API calls, database queries, or other tools"],
                 whereItFits: ["Research → Analysis → Writing → Editing → Publishing", "Extract → Transform → Validate → Load", "Intent recognition → Information gathering → Solution generation → Response formatting", "Requirements → Design → Implementation → Testing → Documentation", "Ideation → Outline → Draft → Review → Finalization"],
                 pros: ["Each step can be developed, tested, and optimized independently", "Clear visibility into where failures occur in the chain", "Structured data contracts ensure consistent handoffs between steps", "Individual chain components can be reused in different workflows", "Each step can have specific retry logic and fallback strategies", "Partial results can be saved and resumed if interrupted", "Different team members can work on different chain segments"],
@@ -1264,9 +1315,9 @@
             },
             {
                 category: "Core Patterns", id: "routing", name: "Routing",
-                difficulty: 'Foundational', applicability: ['Efficiency', 'Scalability', 'Specialization'],
+                difficulty: 'Basic', applicability: ['Efficiency', 'Scalability', 'Specialization'],
                 summary: "Analyze incoming requests and direct them to the most appropriate specialist agent or tool based on their intent and context.",
-                analogy: "It's like a smart receptionist who listens to your needs and connects you to the right department—tech support, sales, or accounting. If unsure, they ask clarifying questions.",
+                analogy: "It's like a smart receptionist who listens to your needs and connects you to the right department-tech support, sales, or accounting. If unsure, they ask clarifying questions.",
                 whenToUse: ["When handling diverse request types requiring different expertise", "When the appropriate process depends on input characteristics", "When different requests require different computational resources", "When specific tools or APIs are needed based on request type", "When you need to handle ambiguous requests differently", "When distributing work across multiple specialized agents"],
                 whereItFits: ["Routing inquiries to appropriate department agents", "Directing requests to text, image, or code processing pipelines", "Routing tasks to appropriate business process workflows", "Directing content to appropriate review pipelines", "Routing patient queries to appropriate medical specialists"],
                 pros: ["Each route can be optimized for specific task types", "Easy to add new routes without affecting existing ones", "Requests are handled by the most appropriate resources", "Dynamic routing based on context and confidence", "Clear separation of concerns between different workflows", "Avoid unnecessary processing for simple requests", "Each route can be updated independently"],
@@ -1385,7 +1436,7 @@
     style Check fill:#fff9c4`
             },
             {
-                category: "Core Patterns", id: "reflection", name: "Reflection",
+                category: "Reasoning & Strategy Patterns", id: "reflection", name: "Reflection",
                 difficulty: 'Intermediate', applicability: ['Quality-Improvement', 'Reliability', 'Accuracy'],
                 summary: "A process of self-critique and iterative improvement. An agent generates a first draft, a 'critic' agent reviews it against quality standards, and the original agent revises it based on the feedback.",
                 analogy: "It's like writing an essay, having a teacher review it with a rubric, and then making improvements based on their comments until you get a passing grade.",
@@ -1446,7 +1497,7 @@
             },
             {
                 category: "Core Patterns", id: "tool-use", name: "Tool Use",
-                difficulty: 'Foundational', applicability: ['Capability', 'Integration', 'Accuracy'],
+                difficulty: 'Basic', applicability: ['Capability', 'Integration', 'Accuracy'],
                 summary: "Empowering an agent to use external tools (like APIs, databases, or functions) to gather information or perform actions that it cannot do on its own.",
                 analogy: "Like a chef who needs an ingredient. They check the pantry (tool registry), verify they can use it, and then retrieve what they need for the recipe. The tool extends their capability.",
                 whenToUse: ["When agents need real-time or dynamic information", "When connecting to databases, APIs, or services", "When precise calculations or data processing is needed", "When reading, writing, or manipulating files", "When agents need to perform concrete actions", "When combining AI reasoning with tool execution"],
@@ -1514,7 +1565,7 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "Advanced Patterns", id: "planning", name: "Planning",
+                category: "Reasoning & Strategy Patterns", id: "planning", name: "Planning",
                 difficulty: 'Intermediate', applicability: ['Strategy', 'Workflow', 'Coordination'],
                 summary: "Break down a large, ambitious goal into a step-by-step plan with milestones and dependencies before execution begins. The agent then follows this plan, monitoring progress.",
                 analogy: "It’s like planning a road trip. You map out your route with checkpoints, monitor traffic conditions, and reroute if you hit a major obstacle, all to ensure you reach your destination efficiently.",
@@ -1584,7 +1635,7 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "Advanced Patterns", id: "multi-agent-collaboration", name: "Multi-Agent Collaboration",
+                category: "Orchestration Patterns", id: "multi-agent-collaboration", name: "Multi-Agent Collaboration",
                 difficulty: 'Advanced', applicability: ['Scalability', 'Specialization', 'Complexity'],
                 summary: "Assemble a team of specialized agents that work together on a complex task, coordinated by a central manager agent and often sharing a common memory or workspace.",
                 analogy: "Like a film crew. A director (coordinator) manages specialists for camera, sound, and lighting. They all work from the same script (shared memory) to create the final movie.",
@@ -1656,7 +1707,7 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "Advanced Patterns", id: "memory-management", name: "Memory Management",
+                category: "Infrastructure & State Patterns", id: "memory-management", name: "Memory Management",
                 difficulty: 'Advanced', applicability: ['Personalization', 'Context', 'Statefulness'],
                 summary: "A system for classifying information into short-term (for the current conversation), episodic (for specific past events), or long-term (permanent knowledge) memory stores.",
                 analogy: "It works like your own brain. You remember what you're talking about right now (short-term), recall specific events like your last birthday (episodic), and know permanent facts like your own name (long-term).",
@@ -1736,7 +1787,7 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "Advanced Patterns", id: "learning-and-adaptation", name: "Learning and Adaptation",
+                category: "Infrastructure & State Patterns", id: "learning-and-adaptation", name: "Learning and Adaptation",
                 difficulty: 'Advanced', applicability: ['Improvement', 'Personalization', 'Optimization'],
                 summary: "Collect feedback from user interactions, ratings, and outcomes. Then, use this validated feedback to update the agent's prompts, policies, or knowledge base to improve future performance.",
                 analogy: "It's like adjusting a recipe based on customer feedback. If people say it's too salty, you clean the feedback (ignore trolls), validate the pattern, and update the recipe to use less salt next time.",
@@ -1813,7 +1864,7 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "Advanced Patterns", id: "model-context-protocol", name: "Model Context Protocol (MCP)",
+                category: "Infrastructure & State Patterns", id: "model-context-protocol", name: "Model Context Protocol (MCP)",
                 difficulty: 'Advanced', applicability: ['Integration', 'Security', 'Enterprise'],
                 summary: "A standardized, secure way for agents to discover and interact with tools, data, and services. It acts as a universal language for agent-to-tool communication.",
                 analogy: "Think of it as a universal adapter for all your electronics. Instead of needing a different plug for each device, you have one secure, standardized protocol that lets any device connect to any power source safely.",
@@ -1892,7 +1943,60 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "System Patterns", id: "goal-setting-and-monitoring", name: "Goal Setting & Monitoring",
+                category: "Reliability & Control Patterns", id: "stop-hook", name: "The Stop Hook",
+                difficulty: 'Intermediate', applicability: ['Reliability', 'Validation', 'Control-Flow'],
+                summary: "A tactical interception mechanism. When an agent decides it is finished and calls a 'stop' or 'complete' tool, this hook intercepts the signal and runs a deterministic check (like a linter or test suite). If the check fails, the stop is blocked, and the errors are fed back to the agent.",
+                analogy: "It's like a security guard at a factory exit. Even if a worker says 'I'm done for the day,' the guard checks their bag. If they are accidentally taking tools home (bugs/errors), the guard blocks the exit and sends them back to return the equipment.",
+                whenToUse: ["When output must pass strict deterministic rules (syntax, compilation)", "Preventing 'lazy' agents from exiting early", "Ensuring code or data formats are valid before human review", "Automating the 'review' phase of a workflow"],
+                whereItFits: ["CI/CD pipelines for AI-generated code", "JSON/YAML configuration generation", "Strict schema validation tasks", "Unit test generation loops"],
+                pros: ["Prevents hallucinated completion", "Reduces wasted human review time", "Provides precise, actionable error feedback to the agent", "Turns stochastic processes into verifiable workflows", "Can be chained (lint → compile → test)"],
+                cons: ["Increases token usage due to retry loops", "Can trap agent in a loop if the error is unfixable", "Requires creating fast, deterministic validation scripts", "Adds latency to the final response"],
+                realWorldExamples: [
+                    '<li><strong>Coding Assistant:</strong><ul><li>Agent calls <code>submit_pr</code></li><li>Stop Hook intercepts and runs <code>npm test</code></li><li>Tests fail → Hook returns STDERR to agent</li><li>Agent reads errors, fixes code, calls <code>submit_pr</code> again</li><li>Tests pass → Hook allows the tool call through</li></ul></li>',
+                    '<li><strong>Data Extraction:</strong><ul><li>Agent marks extraction as complete</li><li>Hook validates JSON against a Zod/Pydantic schema</li><li>If validation fails, returns specific schema errors</li><li>Agent repairs the JSON structure</li></ul></li>',
+                    '<li><strong>SQL Query Generator:</strong><ul><li>Agent generates a SQL query and calls <code>execute_query</code></li><li>Stop Hook runs EXPLAIN or syntax validator</li><li>If invalid, returns SQL syntax errors</li><li>Agent fixes the query and tries again</li><li>Only valid queries reach the database</li></ul></li>',
+                    '<li><strong>Documentation Writer:</strong><ul><li>Agent generates markdown docs and calls <code>publish_docs</code></li><li>Hook runs linter (markdownlint) and link checker</li><li>Broken links or formatting issues → returned to agent</li><li>Agent fixes issues before final publication</li></ul></li>',
+                    '<li><strong>API Response Validator:</strong><ul><li>Agent generates API response payload</li><li>Hook validates against OpenAPI schema</li><li>Invalid fields or missing required properties → rejected</li><li>Agent corrects the payload structure</li></ul></li>'
+                ],
+                hasAdditionalDiagrams: true,
+                additionalDiagrams: [
+                    {
+                        title: "Real-World Example: The Strict CI/CD Agent",
+                        code: `graph TD
+        Agent[Coding Agent] -->|Call| Submit[Tool: submit_pr]
+        Submit --> Intercept[Stop Hook]
+        Intercept --> Test[Run npm test]
+        Test --> Result{Pass?}
+        Result -->|No| Fail[Return STDERR]
+        Fail -->|Retry| Agent
+        Result -->|Yes| Success[Allow PR]
+        Success --> Human[Notify User]`
+                    }
+                ],
+                mermaidCode: `graph TD
+    Start[Agent Works] --> Decides[Agent Decides Done]
+    Decides --> Call{Calls Stop/Finish}
+
+    Call --> Intercept[Stop Hook Intercepts]
+    Intercept --> RunCheck[Run Deterministic Check]
+    RunCheck --> Validator{Passes Checks?}
+
+    Validator -->|No Errors| Block[Block Exit]
+    Block --> Feedback[Inject Errors to Context]
+    Feedback --> Start
+
+    Validator -->|Yes Clean| Allow[Allow Exit]
+    Allow --> Human[Notify Human/User]
+    Human --> End[Task Complete]
+
+    style Start fill:#e1f5fe
+    style Call fill:#fff59d
+    style Intercept fill:#ffccbc
+    style Validator fill:#fff9c4
+    style Allow fill:#c8e6c9`
+            },
+            {
+                category: "Orchestration Patterns", id: "goal-setting-and-monitoring", name: "Goal Setting & Monitoring",
                 difficulty: 'Intermediate', applicability: ['Strategy', 'Performance', 'Autonomy'],
                 summary: "Define specific, measurable, achievable, relevant, and time-bound (SMART) goals for an agent, then continuously monitor its progress against those goals and key performance indicators (KPIs).",
                 analogy: "It's like a GPS for your project. You set a final destination (the goal), and the system constantly monitors your progress, speed, and ETA, recalculating the route if you get off course.",
@@ -1982,7 +2086,7 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "System Patterns", id: "exception-handling-and-recovery", name: "Exception Handling & Recovery",
+                category: "Reliability & Control Patterns", id: "exception-handling-and-recovery", name: "Exception Handling & Recovery",
                 difficulty: 'Intermediate', applicability: ['Reliability', 'Robustness', 'Production'],
                 summary: "A structured way to anticipate, catch, and handle errors. The system classifies errors (e.g., temporary vs. permanent) and follows a specific recovery plan, like retrying, using a fallback, or alerting a human.",
                 analogy: "This is the 'Plan B' for your agentic workflow. If your primary route is blocked (an error), this system decides whether to wait and try again, take a detour (fallback), or call for roadside assistance (human help).",
@@ -2064,7 +2168,7 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "System Patterns", id: "human-in-the-loop", name: "Human-in-the-Loop",
+                category: "Reliability & Control Patterns", id: "human-in-the-loop", name: "Human-in-the-Loop",
                 difficulty: 'Intermediate', applicability: ['Quality-Assurance', 'Safety', 'Compliance'],
                 summary: "Strategically inserting a human checkpoint in an automated workflow, especially for high-risk decisions, ambiguous cases, or quality control, allowing a person to approve, reject, or edit the agent's work.",
                 analogy: "It's the final quality check on a factory line. The machines do most of the work, but a person inspects the product at a critical stage to catch subtle flaws before it's shipped.",
@@ -2142,7 +2246,7 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "System Patterns", id: "knowledge-retrieval-rag", name: "Knowledge Retrieval (RAG)",
+                category: "Infrastructure & State Patterns", id: "knowledge-retrieval-rag", name: "Knowledge Retrieval (RAG)",
                 difficulty: 'Intermediate', applicability: ['Accuracy', 'Factual', 'Context'],
                 summary: "Retrieval-Augmented Generation. This pattern allows an agent to query an external knowledge base (like a vector database of documents) to find relevant information and use it to generate a more accurate, fact-based response.",
                 analogy: "It's like an open-book exam for an AI. Instead of just relying on what it memorized during training, it can look up specific facts in a textbook (the knowledge base) to construct its answer and even cite its sources.",
@@ -2227,7 +2331,7 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "System Patterns", id: "inter-agent-communication-a2a", name: "Inter-Agent Communication",
+                category: "Orchestration Patterns", id: "inter-agent-communication-a2a", name: "Inter-Agent Communication",
                 difficulty: 'Advanced', applicability: ['Collaboration', 'Modularity', 'Scalability'],
                 summary: "Defines the rules and protocols for how multiple agents talk to each other. This can be a centralized 'manager' model, a peer-to-peer model, or a central 'mailbox' system.",
                 analogy: "It’s like an office email system. It has rules for addressing, read receipts for tracking, security clearances, and filters to prevent 'reply-all' disasters, ensuring communication is orderly and effective.",
@@ -2306,9 +2410,9 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "System Patterns", id: "awareness", name: "Awareness",
+                category: "Orchestration Patterns", id: "awareness", name: "Awareness",
                 difficulty: 'Advanced', applicability: ['Efficiency', 'Resource-Optimization', 'Collaboration', 'Distributed-Systems'],
-                summary: "Agents maintain internal state through attributes (intrinsic capabilities defined at creation, like DNA) and create facts about their capabilities, location, and current state in the world state. The Awareness pattern enables other agents to passively detect these facts through detectables, creating beliefs about the agent's capabilities. The agent being queried is completely passive — it simply exists with detectable facts and performs no decision-making about who queries it or how its information is used. This inhibiting pattern provides the information foundation for active patterns like Routing and Resource-Aware Optimization, which make decisions based on detected agent awareness.",
+                summary: "Agents maintain internal state through attributes (intrinsic capabilities defined at creation, like DNA) and create facts about their capabilities, location, and current state in the world state. The Awareness pattern enables other agents to passively detect these facts through detectables, creating beliefs about the agent's capabilities. The agent being queried is completely passive - it simply exists with detectable facts and performs no decision-making about who queries it or how its information is used. This inhibiting pattern provides the information foundation for active patterns like Routing and Resource-Aware Optimization, which make decisions based on detected agent awareness.",
                 analogy: "It's like a temperature sensor in a smart building. The sensor continuously measures temperature and its specifications (model: DS18B20, range: -55°C to +125°C, accuracy: ±0.5°C, current reading: 22.5°C) exist as facts in the building's monitoring system. When the HVAC controller needs temperature data, it detects these facts and creates beliefs about the sensor's capabilities. The sensor doesn't decide whether it's the right sensor for the job - it simply exists with detectable properties. The HVAC controller makes routing decisions based on detected sensor awareness.",
                 hasSimplifiedDiagram: true,
                 simplifiedMermaidCode: `graph LR
@@ -2530,7 +2634,121 @@
 				style Note1 fill:#e8f5e9`
             },
             {
-                category: "Optimization Patterns", id: "resource-aware-optimization", name: "Resource-Aware Optimization",
+                category: "Reliability & Control Patterns", id: "ralph-wiggum-loop", name: "The Ralph Wiggum Loop",
+                difficulty: 'Intermediate', applicability: ['Robustness', 'Unit-Testing', 'Bug-Fixing'],
+                summary: "An architectural pattern where the agent is stripped of the ability to determine completion. The agent operates inside an infinite loop that is controlled entirely by the Environment (tests/compiler). The loop only breaks when the Environment signals success.",
+                analogy: "Imagine a student taking a computerized test. They cannot leave the room just by saying 'I'm finished.' The computer creates the questions, grades the answers instantly, and only unlocks the door when the score reaches 100%.",
+                whenToUse: ["Unit test generation (loop until coverage > 80%)", "Fixing linter errors (loop until exit code 0)", "Formal verification tasks", "Tasks with binary, machine-verifiable success criteria"],
+                whereItFits: ["Autonomous bug patching agents", "Test-Driven Development (TDD) bots", "Configuration repair systems", "Dependency conflict resolution"],
+                pros: ["Guarantees output meets the definition of done", "Agent cannot be 'lazy' or skip requirements", "Removing 'stop' capability simplifies agent decision space", "Highly effective for maintenance tasks"],
+                cons: ["Can spiral into infinite loops (requires max-retry limits)", "Can become expensive if the agent struggles", "Only works for tasks with deterministic success metrics", "Agent might 'game' the metric without solving the root cause"],
+                realWorldExamples: [
+                    '<li><strong>The TDD Bot:</strong><ul><li>Tests fail, showing error messages</li><li>Agent reads the errors and writes a fix</li><li>Tests run again</li><li>If tests still fail: loop continues</li><li>Only when tests pass does the system let the agent stop</li></ul></li>',
+                    '<li><strong>Dependency Solver:</strong><ul><li>Agent tries to install packages but gets version conflicts</li><li>System feeds the error messages back to the agent</li><li>Agent tweaks package versions in package.json</li><li>Installation is retried</li><li>This repeats until npm install finally succeeds</li></ul></li>',
+                    '<li><strong>The Linter Fixer:</strong><ul><li>Developer pushes code, but CI pipeline fails with ESLint errors</li><li>Agent reads each linting error and makes the fix</li><li>Code is committed and pushed again</li><li>CI rejects it? Back to fixing</li><li>Loop continues until the linter gives the green light</li></ul></li>'
+                ],
+                hasAdditionalDiagrams: true,
+                additionalDiagrams: [
+                    {
+                        title: "Real-World Example: The TDD Bot",
+                        code: `graph TD
+        Start[Write Test] --> EnvLoop{Environment Loop}
+        EnvLoop -->|Tests Fail| Read[Read Test Errors]
+        Read --> Agent[Agent Writes Fix]
+        Agent --> Write[Write Code]
+        Write --> Run[Run Tests]
+        Run --> Result{Pass?}
+        Result -->|No| EnvLoop
+        Result -->|Yes| Done[Commit Code]`
+                    }
+                ],
+                mermaidCode: `graph TD
+    Start[Task] --> EnterLoop{While Environment != Valid}
+    
+    EnterLoop -->|Broken| State[Get Current Errors]
+    State --> Agent[Agent Thinks]
+    Agent --> Action[Agent Edits Code]
+    
+    Action --> Execute[Environment Executes]
+    Execute --> Validate{Passes Checks?}
+    
+    Validate -->|No| EnterLoop
+    Validate -->|Yes| Break[Break Loop]
+    
+    Break --> Success[Commit Changes]
+    Success --> End[Done]
+
+    style Start fill:#e1f5fe
+    style EnterLoop fill:#ffccbc
+    style Agent fill:#fff9c4
+    style Execute fill:#b2dfdb
+    style End fill:#c8e6c9`
+            },
+            {
+                category: "Infrastructure & State Patterns", id: "session-isolation", name: "Session Isolation",
+                difficulty: 'Advanced', applicability: ['Security', 'Concurrency', 'Stability'],
+                summary: "Ensuring that agentic workloads run in ephemeral, isolated environments to prevent shared-state corruption and race conditions. This is a strict requirement for running Parallel Fusion or handling untrusted code execution.",
+                analogy: "It's like giving every chef their own kitchen instead of making them share one stove. If one chef burns their meal, it doesn't ruin the food being cooked by the others, and you can simply hose down that kitchen when they are done.",
+                whenToUse: ["Running Parallel Fusion threads", "Allowing agents to execute code (security)", "Preventing 'works on my machine' issues", "Running multiple distinct tasks on the same codebase simultaneously"],
+                whereItFits: ["Using <code>git worktree</code> for lightweight code isolation", "Docker containers for full system isolation", "Cloud sandboxes (e.g., E2B)", "Browser-based virtual file systems"],
+                pros: ["Prevents race conditions in parallel execution", "Allows destructive testing without fear", "Easy cleanup (just delete the folder/container)", "Standardized environment for every run"],
+                cons: ["Overhead in creating/destroying sandboxes", "Disk space usage (especially with full containers)", "Complexity in synchronizing successful results back to main"],
+                realWorldExamples: [
+                    '<li><strong>Git Worktrees:</strong><ul><li>Agent A works on <code>/tmp/feature-a</code></li><li>Agent B works on <code>/tmp/feature-b</code></li><li>Both are checked out from the same repo but have separate file systems</li><li>No conflict until merge time</li></ul></li>',
+                    '<li><strong>Dockerized Agents:</strong><ul><li>Every task spins up a generic <code>node:18</code> container</li><li>Agent creates files inside container</li><li>If successful, files are extracted; if failed, container acts as logs</li></ul></li>',
+                    '<li><strong>Cloud Sandboxes (E2B):</strong><ul><li>Each agent gets an ephemeral cloud environment</li><li>Agent can run arbitrary code, install packages, modify files</li><li>Environment destroyed after task completes</li><li>No cleanup required on host machine</li></ul></li>',
+                    '<li><strong>In-Memory File System:</strong><ul><li>Browser-based agent uses virtual FS (like memfs)</li><li>Multiple agents work on same "files" without overlap</li><li>Each sandbox lives in RAM, completely isolated</li><li>Snapshots can be saved but isolation is maintained</li></ul></li>'
+                ],
+                hasAdditionalDiagrams: true,
+                additionalDiagrams: [
+                    {
+                        title: "Real-World Example: Git Worktree Isolation",
+                        code: `graph TD
+        User[User Request] --> Master[Main Repo]
+        Master --> Fork1[git worktree add /tmp/task-1]
+        Master --> Fork2[git worktree add /tmp/task-2]
+        Fork1 --> Agent1[Agent A Modifies Code]
+        Fork2 --> Agent2[Agent B Modifies Code]
+        Agent1 --> Test1[Test Isolation]
+        Agent2 --> Test2[Test Isolation]
+        Test1 --> Merge1[Merge task-1]
+        Test2 --> Merge2[Merge task-2]
+        Merge1 --> Cleanup1[git worktree remove]
+        Merge2 --> Cleanup2[git worktree remove]`
+                    }
+                ],
+                mermaidCode: `graph TD
+    Start[New Task] --> Create[Create Isolation]
+    
+    Create --> Type{Isolation Type}
+    Type -->|Lightweight| Worktree[Git Worktree]
+    Type -->|Heavy| Container[Docker Container]
+    Type -->|Virtual| VFS[In-Memory FS]
+    
+    Worktree --> Copy[Sync State]
+    Container --> Copy
+    VFS --> Copy
+    
+    Copy --> Execute[Run Agent]
+    Execute --> Result{Result?}
+    
+    Result -->|Success| Extract[Extract Artifacts]
+    Result -->|Fail| Log[Capture Logs]
+    
+    Extract --> Teardown[Destroy Sandbox]
+    Log --> Teardown
+    
+    Teardown --> Merge[Merge to Main]
+    Merge --> End[Done]
+
+    style Start fill:#e1f5fe
+    style Create fill:#fff59d
+    style Execute fill:#b2dfdb
+    style Teardown fill:#ffccbc
+    style End fill:#c8e6c9`
+            },
+            {
+                category: "Orchestration Patterns", id: "resource-aware-optimization", name: "Resource-Aware Optimization",
                 difficulty: 'Advanced', applicability: ['Cost-Saving', 'Performance', 'Efficiency'],
                 summary: "Analyze a task's complexity and route it to the most appropriate resource. Simple tasks use cheap, fast models, while complex tasks use powerful, expensive models to balance cost and quality.",
                 analogy: "It's like choosing your transportation. For a short distance, you walk (cheap model). For a medium trip, you take a bus (standard model). For a long, urgent journey, you take a taxi (powerful model). You pick the right tool for the job based on distance, urgency, and budget.",
@@ -2619,8 +2837,8 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "Optimization Patterns", id: "reasoning-techniques", name: "Reasoning Techniques",
-                difficulty: 'Advanced', applicability: ['Accuracy', 'Problem-Solving', 'Strategy'],
+                category: "Reasoning & Strategy Patterns", id: "reasoning-techniques", name: "Reasoning Techniques",
+                difficulty: 'Intermediate', applicability: ['Accuracy', 'Problem-Solving', 'Strategy'],
                 summary: "Employing structured thinking methods to solve complex problems. This includes techniques like Chain-of-Thought (step-by-step), Tree-of-Thought (exploring multiple paths), and Self-Consistency (checking multiple solutions).",
                 analogy: "This is like a detective solving a complex case. They might list out the sequence of events (Chain-of-Thought), explore different theories about suspects (Tree-of-Thought), or have multiple detectives try to solve it independently and compare notes (Self-Consistency).",
                 whenToUse: ["Multi-step logical challenges", "Problems requiring systematic thinking", "Evaluating multiple approaches", "Deep examination of options", "Weighing alternatives systematically", "Generating diverse solutions"],
@@ -2709,8 +2927,8 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "Optimization Patterns", id: "guardrails-safety-patterns", name: "Guardrails & Safety",
-                difficulty: 'Intermediate', applicability: ['Safety', 'Compliance', 'Brand-Protection'],
+                category: "Reliability & Control Patterns", id: "guardrails-safety-patterns", name: "Guardrails & Safety",
+                difficulty: 'Basic', applicability: ['Safety', 'Compliance', 'Brand-Protection'],
                 summary: "A multi-layered defense system to ensure safe and responsible AI operation. It checks inputs for harmful content or attacks, and moderates outputs to align with ethical guidelines, compliance rules, and brand safety.",
                 analogy: "It's like airport security. Your luggage (input) is scanned for threats. You (the request) are checked against watchlists. The plane's final flight path (output) is checked for safety. Multiple checkpoints ensure a safe journey.",
                 whenToUse: ["Protecting users from harmful content", "Ensuring compliance with laws", "Maintaining company reputation", "Protecting sensitive information", "Preventing system exploitation", "Ensuring responsible AI behavior"],
@@ -2804,8 +3022,8 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "Optimization Patterns", id: "evaluation-and-monitoring", name: "Evaluation & Monitoring",
-                difficulty: 'Advanced', applicability: ['Reliability', 'Performance', 'Quality-Assurance'],
+                category: "Infrastructure & State Patterns", id: "evaluation-and-monitoring", name: "Evaluation & Monitoring",
+                difficulty: 'Intermediate', applicability: ['Reliability', 'Performance', 'Quality-Assurance'],
                 summary: "A continuous quality control process. It involves setting up 'golden tests' before deployment and then constantly monitoring key metrics like accuracy, performance, cost, and model drift in production to detect issues early.",
                 analogy: "Think of a factory's quality control system. Products are checked against a perfect sample ('golden test') before they leave, and assembly line sensors ('monitoring') constantly track performance to catch any deviations in real-time.",
                 whenToUse: ["Any system requiring reliability", "Ensuring consistent performance", "Meeting regulatory standards", "Identifying bottlenecks", "Tracking resource usage", "Data-driven optimization"],
@@ -2906,7 +3124,75 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "Strategic Patterns", id: "prioritization", name: "Prioritization",
+                category: "Reasoning & Strategy Patterns", id: "parallel-fusion", name: "Parallel Fusion",
+                difficulty: 'Intermediate', applicability: ['Quality', 'Exploration', 'Rapid-Prototyping'],
+                summary: "Running multiple isolated agent instances (threads) on the same problem simultaneously, then using a 'Fusion' step to aggregate, compare, or cherry-pick the best results. This trades compute cost for higher confidence.",
+                analogy: "It's like hiring three different interior designers to each create a complete proposal for your living room. Designer A goes bold and modern, Designer B chooses cozy traditional, and Designer C suggests something minimalist. You review all three approaches, pick the one that resonates most, and maybe blend a few ideas from the others into your final vision.",
+                whenToUse: ["Rapid prototyping where one 'trajectory' might get stuck", "Generating diverse options for creative tasks", "Benchmarking prompt performance", "High-stakes tasks where accuracy > cost", "Code generation where different approaches might yield better performance"],
+                whereItFits: ["UI/UX Prototyping (generating 3 versions)", "Complex refactoring (trying different strategies)", "Research synthesis (getting diverse viewpoints)", "Vulnerability scanning (using different scan logic)"],
+                pros: ["Avoids 'getting stuck' in a single bad train of thought", "Significantly increases probability of a working solution", "Produces diverse outputs for human selection", "Can run effectively 'in background' while user works"],
+                cons: ["Linear increase in cost (5 threads = 5x cost)", "Requires robust Session Isolation (sandbox)", "Higher latency if waiting for the slowest thread", "Complexity in merging/fusing the results"],
+                realWorldExamples: [
+                    '<li><strong>UI Prototyping:</strong><ul><li>Spawn 3 agents with different design prompts (Modern, Classic, Minimal)</li><li>Each builds a component in isolation</li><li>Reviewer sees all 3 and picks the best approach</li></ul></li>',
+                    '<li><strong>Code Refactoring:</strong><ul><li>Run 5 agents trying to fix a complex bug</li><li>3 fail, 2 succeed</li><li>Fusion step discards failures and presents the successful patches</li></ul></li>',
+                    '<li><strong>Test Case Generation:</strong><ul><li>Run parallel agents to generate edge cases</li><li>Merge all unique valid test cases into one master suite</li></ul></li>'
+                ],
+                hasAdditionalDiagrams: true,
+                additionalDiagrams: [
+                    {
+                        title: "Real-World Example: The UI/UX Prototyper",
+                        code: `graph TD
+        Request[Design Login Page] --> Router[Parallel Router]
+        Router --> A1[Agent: Material Design]
+        Router --> A2[Agent: Flat Design]
+        Router --> A3[Agent: Brutalist]
+        A1 --> Code1[React Code A]
+        A2 --> Code2[React Code B]
+        A3 --> Code3[React Code C]
+        Code1 --> Judge[Fusion Agent]
+        Code2 --> Judge
+        Code3 --> Judge
+        Judge --> Select[Select Best UX]
+        Select --> Final[Return Code B]`
+                    }
+                ],
+                mermaidCode: `graph TD
+    Start[User Prompt] --> Fork[Fork Process]
+    
+    Fork --> T1[Thread 1]
+    Fork --> T2[Thread 2]
+    Fork --> T3[Thread 3]
+    
+    T1 --> Sand1[Sandbox 1]
+    T2 --> Sand2[Sandbox 2]
+    T3 --> Sand3[Sandbox 3]
+    
+    Sand1 --> Work1[Agent Work]
+    Sand2 --> Work2[Agent Work]
+    Sand3 --> Work3[Agent Work]
+    
+    Work1 --> Res1[Result A]
+    Work2 --> Res2[Result B]
+    Work3 --> Res3[Result C]
+    
+    Res1 --> Fuse[Fusion Layer]
+    Res2 --> Fuse
+    Res3 --> Fuse
+    
+    Fuse --> Select{Selection Logic}
+    Select -->|Best-of-N| Pick[Pick Winner]
+    Select -->|Aggregate| Merge[Merge Insights]
+    
+    Pick --> Output[Final Output]
+    Merge --> Output
+
+    style Start fill:#e1f5fe
+    style Fork fill:#fff59d
+    style Fuse fill:#ffccbc
+    style Output fill:#c8e6c9`
+            },
+            {
+                category: "Reasoning & Strategy Patterns", id: "prioritization", name: "Prioritization",
                 difficulty: 'Intermediate', applicability: ['Efficiency', 'Strategy', 'Workflow'],
                 summary: "A system for dynamically scoring and ranking tasks in a queue based on factors like business value, risk, effort, and urgency. It ensures that the most important work gets done first.",
                 analogy: "It's like an emergency room triage system. Patients (tasks) are assessed and the most critical cases are seen first, but the system also ensures that everyone is eventually seen, preventing anyone from waiting forever.",
@@ -3003,8 +3289,8 @@
     style End fill:#c8e6c9`
             },
             {
-                category: "Strategic Patterns", id: "exploration-and-discovery", name: "Exploration & Discovery",
-                difficulty: 'Advanced', applicability: ['Innovation', 'Research', 'Strategy'],
+                category: "Reasoning & Strategy Patterns", id: "exploration-and-discovery", name: "Exploration & Discovery",
+                difficulty: 'Intermediate', applicability: ['Innovation', 'Research', 'Strategy'],
                 summary: "A research-oriented pattern where an agent starts by broadly exploring a knowledge space, identifies and clusters interesting patterns or themes, and then performs a 'deep dive' on the most promising areas.",
                 analogy: "It's like a detective starting a case. First, they gather all possible clues from everywhere (broad exploration). Then, they find connections and group them into patterns (clustering). Finally, they focus their investigation on the most promising leads (deep dive).",
                 whenToUse: ["Investigating new domains", "Finding breakthrough opportunities", "Understanding complex challenges", "Identifying what's unknown", "Discovering market opportunities", "Generating and testing hypotheses"],
@@ -3106,7 +3392,119 @@
     style Check fill:#f3e5f5
     style End fill:#c8e6c9`
             },
-        ];
+
+            {
+                category: "Core Patterns", id: "code-then-execute", name: "Code-Then-Execute",
+                difficulty: 'Intermediate', applicability: ['Math', 'Logic', 'Accuracy'],
+                summary: "Instead of reasoning purely via text (which is prone to hallucination), the agent writes a script (e.g., Python), executes it, and uses the actual output as its answer. This bridges the gap between language capability and computational precision.",
+                analogy: "It's like a student allowed to use a calculator during a math exam. Instead of doing long division in their head and maybe making a mistake, they type it in and get the exact number.",
+                whenToUse: ["Solving complex mathematical problems", "Counting words or characters exactly", "Performing date and time calculations", "Analyzing datasets with exact statistics", "Tasks where logic steps are strict and computational"],
+                whereItFits: ["Data analysis chatbots", "Financial calculation agents", "Scientific research helpers", "Logic puzzle solvers", "Date scheduling assistants"],
+                pros: ["Eliminates calculation hallucinations", "Can handle data sizes larger than context window", "Provides verifiable, reproducible answers", "Leverages existing, powerful libraries (NumPy, Pandas)", "Separates logic (code) from articulation (text)"],
+                cons: ["Requires a secure, sandboxed execution environment", "Higher latency due to code generation and execution", "Execution environments can be resource heavy", "Risk of generating infinite loops or errors", "Limited by the libraries available in the environment"],
+                realWorldExamples: [
+                    '<li><strong>Math Solver:</strong><ul><li>User asks for the square root of a large number.</li><li>Agent writes a Python script importing <code>math</code>.</li><li>Agent executes <code>print(math.sqrt(x))</code>.</li><li>Agent reads the output and formulates the answer.</li></ul></li>',
+                    '<li><strong>Data Analyst:</strong><ul><li>User uploads a CSV.</li><li>Agent writes Python using Pandas to load the CSV.</li><li>Agent computes the mean and standard deviation via code.</li><li>Agent reports the exact statistical findings.</li></ul></li>',
+                    '<li><strong>Word Counter:</strong><ul><li>User provides a paragraph and asks for the count of words starting with "A".</li><li>Agent writes a regex script to count matches.</li><li>Agent executes script and returns the exact integer.</li></ul></li>'
+                ],
+                mermaidCode: `graph TD
+    Start[Complex Logic/Math Task] --> Plan[Formulate Logic]
+    
+    Plan --> WriteCode[Write Script]
+    WriteCode --> Sandbox[Execute in Sandbox]
+    
+    Sandbox --> Success{Run Successful?}
+    
+    Success -->|No| Fix[Read Error & Fix]
+    Fix --> WriteCode
+    
+    Success -->|Yes| Output[Read StdOut]
+    
+    Output --> Interpret[Interpret Result]
+    Interpret --> Answer[Final Answer]
+    
+    Answer --> End[Task Complete]
+
+    style Start fill:#e1f5fe
+    style WriteCode fill:#fff59d
+    style Sandbox fill:#ffccbc
+    style Success fill:#fff9c4
+    style End fill:#c8e6c9`
+            },
+            {
+                category: "Core Patterns", id: "dynamic-scaffolding", name: "Dynamic Scaffolding",
+                difficulty: 'Advanced', applicability: ['Adaptability', 'Novelty', 'Autonomy'],
+                summary: "The agent doesn't just use existing tools; it creates new, temporary tools or scripts on the fly to solve a specific problem, uses them, and then discards them. This transforms the agent from a tool user to a tool maker.",
+                analogy: "It's like MacGyver or a master craftsman who builds a temporary jig to hold a part in place for a specific drill angle. Once the hole is drilled, the jig is no longer needed and is discarded.",
+                whenToUse: ["When no pre-built tool exists for a specific task", "When dealing with unique or messy data formats", "For one-off data migration tasks", "When scraping websites with unusual structures", "When multiple small steps can be automated by a single script"],
+                whereItFits: ["Data cleaning pipelines for unknown datasets", "Web scraping of non-standard sites", "File format conversion for legacy systems", "Automated testing of dynamic UIs", "Ad-hoc data analysis"],
+                pros: ["Allows agents to handle novel, unforeseen tasks", "Reduces the need for a massive library of pre-built tools", "Scripts are tailored exactly to the current problem", "Increases agent autonomy and problem-solving capability", "Can be safer than giving direct shell access if sandboxed properly"],
+                cons: ["High complexity to implement safely", "Requires a robust, sandboxed code execution environment", "Risk of generating infinite loops or resource-heavy scripts", "Debugging generated scripts can be difficult", "Higher latency due to script generation and execution time"],
+                realWorldExamples: [
+                    '<li><strong>Data Migration:</strong><ul><li>Agent encounters a CSV with a weird, non-standard delimiter.</li><li>Instead of failing, it writes a short Python script to parse that specific format.</li><li>It runs the script to convert the data to standard JSON.</li><li>The script is discarded after the conversion is complete.</li></ul></li>',
+                    '<li><strong>Web Scraping:</strong><ul><li>Agent needs to extract data from a site with complex DOM structure.</li><li>It generates a specific Puppeteer script to navigate and extract the data.</li><li>The script handles the unique pagination and selectors of that site.</li><li>Data is returned, and the script is deleted.</li></ul></li>',
+                    '<li><strong>File Conversion:</strong><ul><li>Agent needs to read a proprietary binary file format.</li><li>It writes a C++ or Python utility based on a spec to read the file.</li><li>The utility extracts the text content.</li><li>The utility is removed after use.</li></ul></li>'
+                ],
+                mermaidCode: `graph TD
+    Start[Task Input] --> NeedsTool{Tool Exists?}
+    
+    NeedsTool -->|Yes| UseTool[Use Existing Tool]
+    NeedsTool -->|No| CreateScript[Generate Temporary Script]
+    
+    CreateScript --> Sandbox[Execute in Sandbox]
+    Sandbox --> Success{Did it Work?}
+    
+    Success -->|No| Refine[Debug & Fix Script]
+    Refine --> Sandbox
+    
+    Success -->|Yes| Result[Get Output]
+    Result --> Discard[Discard Script]
+    
+    Discard --> Next[Proceed with Task]
+    UseTool --> Next
+    Next --> End[Task Complete]
+
+    style Start fill:#e1f5fe
+    style NeedsTool fill:#fff59d
+    style CreateScript fill:#ffccbc
+    style Success fill:#fff9c4
+    style End fill:#c8e6c9`
+            },
+            {
+                category: "Reliability & Control Patterns", id: "spec-first-agent", name: "Spec-First Agent",
+                difficulty: 'Intermediate', applicability: ['Compliance', 'Production', 'Reliability'],
+                summary: "The agent is constrained by a rigid source of truth (such as an OpenAPI spec, JSON Schema, or PRD) and operates as a compliance engine to ensure outputs strictly match the specification. It prioritizes adherence over creativity.",
+                analogy: "It's like a construction crew building strictly to blueprints. They don't improvise where the walls go; they measure everything against the architectural print. If the print says the door is 3 feet wide, they make it exactly 3 feet wide.",
+                whenToUse: ["Generating API clients or SDKs", "Strict data extraction where format matters", "Enterprise workflows requiring 100% schema compliance", "Filling out government or legal forms", "Generating code that must pass a specific linter config"],
+                whereItFits: ["Contract-driven development", "Automated QA test generation", "Legacy system integration", "Regulatory compliance bots", "Data migration with strict schemas"],
+                pros: ["Ensures predictable, standard-compliant outputs", "Reduces hallucinations by enforcing rigid constraints", "Makes testing and validation deterministic", "Easier to integrate into existing engineering pipelines", "Reduces the need for complex prompt engineering"],
+                cons: ["Reduces flexibility and creative problem solving", "Requires up-front investment in creating high-quality specs", "Agent may fail if the spec is ambiguous or incorrect", "Can be too rigid for exploratory tasks"],
+                realWorldExamples: [
+                    '<li><strong>API Client Generator:</strong><ul><li>Agent reads an OpenAPI (Swagger) specification.</li><li>It generates a Python client library that exactly matches the endpoints.</li><li>It validates the generated code against the spec types.</li></ul></li>',
+                    '<li><strong>Form Filler:</strong><ul><li>Agent is given a PDF of a government tax form and a JSON schema of the required fields.</li><li>It extracts data from a user\'s documents.</li><li>It ensures the output JSON strictly matches the schema (e.g., SSN format, date format).</li></ul></li>',
+                    '<li><strong>Configuration Manager:</strong><ul><li>Agent manages Kubernetes YAML files.</li><li>It is constrained by the strict Kubernetes schema.</li><li>It rejects any configuration that does not validate against the cluster version.</li></ul></li>'
+                ],
+                mermaidCode: `graph TD
+    Start[Task Input] --> LoadSpec[Load Specification]
+    LoadSpec --> Constraint[Apply Constraints]
+    
+    Constraint --> Agent[Agent Generates Output]
+    Agent --> Validator[Validate against Spec]
+    
+    Validator --> Success{Valid?}
+    
+    Success -->|No| Fix[Get Validation Errors]
+    Fix --> Agent
+    
+    Success -->|Yes| Final[Final Output]
+    Final --> End[Task Complete]
+
+    style Start fill:#e1f5fe
+    style LoadSpec fill:#fff59d
+    style Validator fill:#ffccbc
+    style Success fill:#fff9c4
+    style End fill:#c8e6c9`
+            },];
 
         const caseStudiesData = [
             {
@@ -3133,7 +3531,7 @@
             {
                 id: "case-study-code-review",
                 name: "Intelligent Code Review System",
-                problem: "A growing software development team faces challenges with code quality and consistency. Junior developers need guidance, senior developers are overwhelmed with review requests, and knowledge about coding standards and best practices isn't consistently applied across the team.",
+                problem: "A growing software development team faces challenges with code quality and consistency. Junior developers need guidance, senior developers are overwhelmed by review requests, and knowledge about coding standards and best practices isn't consistently applied across the team.",
                 solution: "An intelligent code review assistant was developed using a multi-agent architecture. When a pull request is submitted, a Triage agent first assesses the code complexity and routes it to appropriate reviewers (<strong>Routing</strong>). A Security agent runs automated security scans (<strong>Tool Use</strong>) looking for vulnerabilities, while a Quality agent checks for code smells, test coverage, and adherence to coding standards. A Documentation agent verifies that code comments and documentation are adequate. For complex architectural changes, the system uses reasoning techniques (<strong>Reasoning Techniques</strong>) to analyze the impact on the broader codebase. If the code involves unfamiliar patterns or technologies, the system retrieves relevant examples from the team's knowledge base (<strong>Knowledge Retrieval (RAG)</strong>). Human reviewers (<strong>Human-in-the-Loop</strong>) are brought in only for complex architectural decisions or when the system confidence is low. The system learns from all review outcomes (<strong>Learning and Adaptation</strong>) to improve future automated assessments and provide better guidance to developers.",
                 patterns: ["Routing", "Tool Use", "Reasoning Techniques", "Knowledge Retrieval (RAG)", "Human-in-the-Loop", "Learning and Adaptation"]
             },
@@ -3163,7 +3561,7 @@
                 name: "Enterprise Data Integration Platform",
                 problem: "A large corporation struggles with data silos across multiple departments. Different teams use various tools and APIs, making it difficult to create unified workflows that access data from CRM systems, databases, and cloud services securely.",
                 solution: "An enterprise integration platform was built using a standardized protocol that enables secure communication between AI agents and diverse data sources. The system implements (<strong>Model Context Protocol</strong>) to provide a universal interface for accessing CRM data, financial databases, cloud storage, and internal APIs. Agents can dynamically discover available resources, authenticate securely, and interact with different services using consistent methods. This allows the creation of complex workflows like generating executive reports that pull data from multiple departments, updating customer records across systems, or triggering alerts based on data from various sources, all while maintaining security and audit trails.",
-                patterns: ["Model Context Protocol"]
+                patterns: ["Model Context Protocol (MCP)"]
             },
             {
                 id: "case-study-goal-monitoring-sales",
@@ -3197,15 +3595,92 @@
                 id: "case-study-smart-building",
                 name: "Smart Building Energy Management",
                 problem: "A large office building with hundreds of IoT sensors (temperature, occupancy, light levels, HVAC units) struggles with energy efficiency. The building management system lacks intelligent coordination, leading to wasted energy from heating empty rooms, cooling conflicts between zones, and inability to predict maintenance needs. Energy costs are high and tenant comfort complaints are frequent.",
-                solution: "An intelligent energy management system was implemented using the Awareness pattern as its foundation. Each IoT device has DNA attributes defining its capabilities: sensor type, location, measurement range, accuracy, and power consumption (<strong>Awareness</strong>). Devices continuously create facts in the world state about their current readings, battery levels, operational status, and last maintenance date. The central energy management system detects these facts via queries and creates beliefs about the building's state. Based on detected awareness, the system routes optimization decisions (<strong>Routing</strong>) to appropriate controllers. For example, when occupancy sensors report empty conference rooms, the system detects these facts and routes commands to reduce HVAC and lighting in those zones. The system uses resource-aware optimization (<strong>Resource-Aware Optimization</strong>) to balance energy costs against comfort requirements, detecting which HVAC units have capacity and which are operating at peak efficiency. Goal setting and monitoring (<strong>Goal Setting & Monitoring</strong>) tracks energy reduction targets and comfort metrics. The devices remain completely passive — they simply expose their state as facts. The management system actively detects, believes, and decides all optimization actions. This has resulted in significant energy cost reduction while improving tenant comfort scores.",
+                solution: "An intelligent energy management system was implemented using the Awareness pattern as its foundation. Each IoT device has DNA attributes defining its capabilities: sensor type, location, measurement range, accuracy, and power consumption (<strong>Awareness</strong>). Devices continuously create facts in the world state about their current readings, battery levels, operational status, and last maintenance date. The central energy management system detects these facts via queries and creates beliefs about the building's state. Based on detected awareness, the system routes optimization decisions (<strong>Routing</strong>) to appropriate controllers. For example, when occupancy sensors report empty conference rooms, the system detects these facts and routes commands to reduce HVAC and lighting in those zones. The system uses resource-aware optimization (<strong>Resource-Aware Optimization</strong>) to balance energy costs against comfort requirements, detecting which HVAC units have capacity and which are operating at peak efficiency. Goal setting and monitoring (<strong>Goal Setting & Monitoring</strong>) tracks energy reduction targets and comfort metrics. The devices remain completely passive - they simply expose their state as facts. The management system actively detects, believes, and decides all optimization actions. This has resulted in significant energy cost reduction while improving tenant comfort scores.",
                 patterns: ["Awareness", "Routing", "Resource-Aware Optimization", "Goal Setting & Monitoring"]
             },
             {
                 id: "case-study-robot-fleet",
                 name: "Autonomous Delivery Robot Fleet",
                 problem: "A warehouse uses 50 autonomous robots for package delivery but struggles with efficient task allocation. Robots are manually assigned tasks without considering their current battery levels, locations, or cargo capacity. This leads to failed deliveries when robots run out of battery mid-route, inefficient routing with robots traveling across the warehouse unnecessarily, and uneven workload distribution causing some robots to be overworked while others sit idle.",
-                solution: "A fleet management system was built using the Awareness pattern for intelligent task allocation. Each robot has DNA attributes defining its intrinsic capabilities: maximum payload capacity, battery capacity, navigation capabilities, and sensor suite (<strong>Awareness</strong>). Robots continuously create facts about their current state: location, battery level, cargo status, whether maintenance is due, and current task. The fleet management system detects these facts via telemetry and creates beliefs about robot availability and suitability for incoming tasks. When a new delivery task arrives, the system uses routing (<strong>Routing</strong>) to analyze task requirements and detect which robots have the necessary capabilities. It then uses prioritization (<strong>Prioritization</strong>) to rank tasks by urgency and value, ensuring critical deliveries are handled first. The system implements goal setting and monitoring (<strong>Goal Setting & Monitoring</strong>) to track delivery targets, battery usage efficiency, and maintenance schedules. Exception handling (<strong>Exception Handling & Recovery</strong>) manages scenarios where robots encounter obstacles or battery levels drop unexpectedly — the system detects the changed facts and reassigns tasks to other available robots. The robots themselves are completely passive — they execute assigned tasks and update their state facts. The fleet manager actively detects robot awareness, creates beliefs about optimal assignments, and decides task allocation. This approach has increased delivery efficiency, reduced battery-related failures, and improved robot utilization.",
+                solution: "A fleet management system was built using the Awareness pattern for intelligent task allocation. Each robot has DNA attributes defining its intrinsic capabilities: maximum payload capacity, battery capacity, navigation capabilities, and sensor suite (<strong>Awareness</strong>). Robots continuously create facts about their current state: location, battery level, cargo status, whether maintenance is due, and current task. The fleet management system detects these facts via telemetry and creates beliefs about robot availability and suitability for incoming tasks. When a new delivery task arrives, the system uses routing (<strong>Routing</strong>) to analyze task requirements and detect which robots have the necessary capabilities. It then uses prioritization (<strong>Prioritization</strong>) to rank tasks by urgency and value, ensuring critical deliveries are handled first. The system implements goal setting and monitoring (<strong>Goal Setting & Monitoring</strong>) to track delivery targets, battery usage efficiency, and maintenance schedules. Exception handling (<strong>Exception Handling & Recovery</strong>) manages scenarios where robots encounter obstacles or battery levels drop unexpectedly - the system detects the changed facts and reassigns tasks to other available robots. The robots themselves are completely passive - they execute assigned tasks and update their state facts. The fleet manager actively detects robot awareness, creates beliefs about optimal assignments, and decides task allocation. This approach has increased delivery efficiency, reduced battery-related failures, and improved robot utilization.",
                 patterns: ["Awareness", "Routing", "Prioritization", "Goal Setting & Monitoring", "Exception Handling & Recovery"]
+            },
+            {
+                id: "case-study-ci-cd-agent",
+                name: "The Strict CI/CD Agent",
+                problem: "A development team wants to automate bug fixing, but they don't trust the AI to write correct code. Previous attempts resulted in the AI confidently saying 'I fixed it', but the code failed to compile or broke existing functionality.",
+                solution: "They implemented a (<strong>Stop Hook</strong>) within their agent's toolset. Now, when the agent tries to call the `submit_pull_request` tool, the system intercepts the call and triggers a deterministic test runner in the background. If the tests fail, the Stop Hook blocks the submission and pipes the `STDERR` logs back into the agent's context window. The agent uses various development tools (<strong>Tool Use</strong>) to read files, edit code, run tests, and inspect error logs during the fix iteration process. The agent processes the specific error messages, reflects on what went wrong (<strong>Reflection</strong>), and attempts a more targeted fix before trying to submit again. This cycle continues until the tests pass, ensuring that no broken code ever reaches the human review queue.",
+                patterns: ["The Stop Hook", "Tool Use", "Reflection"]
+            },
+            {
+                id: "case-study-ui-prototyper",
+                name: "The UI/UX Prototyper",
+                problem: "A frontend team spends too much time building initial mockups. They want to explore multiple design directions (Minimalist, Corporate, Playful) simultaneously, but running an agent sequentially for each style takes too long and context bleeds between attempts.",
+                solution: "They built a (<strong>Parallel Fusion</strong>) workflow. When a user asks for a 'Login Page', the system spins up three parallel threads using (<strong>Parallelization</strong>) to execute all agents simultaneously rather than sequentially. To prevent file conflicts, each thread runs in its own (<strong>Session Isolation</strong>) sandbox (using `git worktree`). Thread A is prompted with 'Material Design', Thread B with 'Brutalist', and Thread C with 'Glassmorphism'. Each agent uses specialized tools (<strong>Tool Use</strong>) to create HTML/CSS files, install dependencies, and capture screenshots of the generated interfaces. All three agents generate code simultaneously. Once finished, a Fusion layer captures screenshots of the three results and presents them to the user (or a Judge Agent) to select the best starting point. This reduces prototyping time by 66%.",
+                patterns: ["Parallel Fusion", "Session Isolation", "Parallelization", "Tool Use"]
+            },
+            {
+                id: "case-study-legacy-refactor",
+                name: "The Legacy Code Refactorer",
+                problem: "A company needs to upgrade a massive legacy codebase from Node 14 to Node 20. There are thousands of dependency conflicts. A standard agent gives up after a few tries or hallucinates that the upgrade is 'complete' when it's actually just ignoring the errors.",
+                solution: "They deployed an agent inside a (<strong>Ralph Wiggum Loop</strong>). The agent has no 'I am done' tool. It interacts with the terminal in a loop that is controlled entirely by the environment. The loop condition is `while (npm install != success)`. The agent reads the error logs, patches `package.json`, and the environment automatically re-runs the install command. The agent is effectively 'trapped' in the loop, forcing it to iterate on the specific dependency errors until the environment explicitly signals success. To prevent corrupting the actual codebase during experimentation, each iteration runs in an isolated environment using (<strong>Session Isolation</strong>) with git worktrees, allowing safe trial-and-error without affecting the main repository. The system gracefully handles unexpected errors and failure scenarios (<strong>Exception Handling & Recovery</strong>), logging each attempt and automatically retrying with different strategies when dependency resolution fails. This solved dependency chains that required 50+ iterations, which a human would have abandoned.",
+                patterns: ["The Ralph Wiggum Loop", "Session Isolation", "Exception Handling & Recovery"]
+            },
+            {
+                id: "case-study-language-tutor",
+                name: "Personal AI Learning Companion",
+                problem: "A language learning app's AI tutor doesn't remember conversations, vocabulary gaps, or learning progress across sessions. Users become frustrated repeating the same context and re-explaining their learning history.",
+                solution: "An intelligent tutoring system was created that maintains persistent learning profiles for each user. The system implements (<strong>Memory Management</strong>) to store semantic memories of vocabulary mastered and grammar rules learned, episodic memories of breakthrough moments and confusion points, and procedural memories of which teaching approaches work best for each individual. When a user struggles with a concept, the system retrieves relevant past conversations from a vector database (<strong>Knowledge Retrieval (RAG)</strong>) and references the specific examples that helped previously. After each session, the system reflects (<strong>Reflection</strong>) on which explanations were most effective and updates the teaching strategy accordingly. Users can correct or reinforce memory associations (<strong>Human-in-the-Loop</strong>), ensuring the learning profile accurately reflects their progress.",
+                patterns: ["Memory Management", "Knowledge Retrieval (RAG)", "Reflection", "Human-in-the-Loop"]
+            },
+            {
+                id: "case-study-content-quality",
+                name: "AI Content Quality Assurance Platform",
+                problem: "A news organization uses AI to generate summaries and social posts, but lacks visibility into quality. Some summaries contain factual errors or miss key points, and editors spend excessive time reviewing everything manually with no data on what drives quality differences.",
+                solution: "A comprehensive quality assurance platform was developed to continuously monitor AI-generated content. The system implements (<strong>Evaluation & Monitoring</strong>) to score all output on multiple dimensions: factual accuracy (cross-checking against source material using verification tools (<strong>Tool Use</strong>)), completeness of key point coverage, readability scores, and brand tone alignment. Quality trends are tracked over time with dashboards showing performance metrics, and alerts notify editors when content falls below quality thresholds. The system analyzes why certain content scores poorly (<strong>Reflection</strong>) and uses this data to improve prompting strategies (<strong>Learning and Adaptation</strong>). High-quality examples are automatically added to a few-shot prompt library, while editor review provides ground truth for training the evaluation models (<strong>Human-in-the-Loop</strong>).",
+                patterns: ["Evaluation & Monitoring", "Tool Use", "Reflection", "Learning and Adaptation", "Human-in-the-Loop"]
+            },
+            {
+                id: "case-study-test-fixer",
+                name: "Automated Test Failure Resolver",
+                problem: "A software team has thousands of automated tests that fail weekly due to flaky tests, API changes, or code regressions. Developers spend hours investigating failures, often giving up after a few attempts and commenting out tests.",
+                solution: "A persistent test repair agent was created that tirelessly tries different fix strategies until tests pass. When a test fails, the system implements (<strong>The Ralph Wiggum Loop</strong>) to attempt repair strategies sequentially: increase timeouts, update authentication tokens, refresh mock data, adjust assertions, update dependencies, modify test environment configuration. Each attempt runs in an isolated environment (<strong>Session Isolation</strong>) to prevent cascading issues. The agent uses tools to run tests, modify code, check logs, and update dependencies (<strong>Tool Use</strong>), gracefully handling failures (<strong>Exception Handling & Recovery</strong>). After each attempt, the test re-runs and the result is recorded. The system only succeeds when the test actually passes (<strong>The Stop Hook</strong>), verified by the test runner. Successful fixes are recorded for future reference (<strong>Reflection</strong>), creating a solutions database. Even after 20 failed attempts, the agent maintains optimism and tries approach #21.",
+                patterns: ["The Ralph Wiggum Loop", "Session Isolation", "Tool Use", "Exception Handling & Recovery", "Reflection", "The Stop Hook"]
+            },
+            {
+                id: "case-study-job-tracker",
+                name: "Job Application Tracker",
+                problem: "A job seeker uses an AI assistant to manage applications to multiple companies simultaneously. The AI sometimes leaks context-mentioning salary offers from other companies or discussing interview questions from one company while preparing for another-harming negotiation positions.",
+                solution: "An intelligent job application management system was built with complete separation between applications. Each job application exists in an isolated session (<strong>Session Isolation</strong>) with its own memory of that company's role details, interview notes, salary discussions, and communication history. When preparing for a Google interview, the system only knows Google's specific role, team culture, and the candidate's salary expectation. When switching to prepare for a Meta interview, it's a completely fresh session with zero knowledge of the Google discussion. The system maintains application-specific notes, interview preparation materials, and salary negotiation history (<strong>Memory Management</strong>). It uses tools to research companies, tailor resumes, and look up salary data (<strong>Tool Use</strong>), and learns which interview approaches work for each company (<strong>Reflection</strong>). Candidates review all AI-generated application materials before sending (<strong>Human-in-the-Loop</strong>).",
+                patterns: ["Session Isolation", "Memory Management", "Tool Use", "Reflection", "Human-in-the-Loop"]
+            },
+            {
+                id: "case-study-creative-fusion",
+                name: "Creative Content Synthesis Engine",
+                problem: "A marketing team needs to generate diverse creative concepts but running an AI agent sequentially for each concept is slow and suffers from 'path dependence' where the first idea influences subsequent ones.",
+                solution: "A parallel content generation system was developed that explores multiple creative directions simultaneously. Multiple isolated AI agents are launched in parallel (<strong>Parallel Fusion</strong>), each in a separate session (<strong>Session Isolation</strong>) to prevent context bleeding, with each agent tasked with generating content from a different creative perspective. One agent focuses on 'bold and disruptive' messaging, another on 'trustworthy and established' positioning, a third on 'witty and memorable' taglines, and a fourth on 'minimalist and elegant' visual concepts. All agents run simultaneously (<strong>Parallelization</strong>) using content generation and image creation tools (<strong>Tool Use</strong>). Once all agents complete, a fusion agent scores each output and selects the best elements (<strong>Evaluation & Monitoring</strong>)-the best tagline from one agent, the visual concept from another, the messaging framework from a third-and synthesizes them into a cohesive final concept. The system analyzes why certain approaches were more effective (<strong>Reflection</strong>) to improve future creative generations.",
+                patterns: ["Parallel Fusion", "Session Isolation", "Parallelization", "Tool Use", "Evaluation & Monitoring", "Reflection"]
+            },
+            {
+                id: "case-study-sports-analytics",
+                name: "Real-Time Sports Analytics Platform",
+                problem: "A sports betting company needs to compute complex statistics during live games - win probabilities, expected goals, momentum shifts. Pure text reasoning produces unreliable numbers, and hard-coded calculators can't adapt to novel statistics or unusual game situations.",
+                solution: "A live analytics system was built to compute statistics on-the-fly. As game events stream in, the agent generates Python scripts to calculate custom metrics (<strong>Code-Then-Execute</strong>). For example, to compute 'expected goals' in soccer, it writes a script that processes shot locations, angles, and defender positions using the specific statistical model the company uses. Different statistics are computed simultaneously (<strong>Parallelization</strong>). A routing agent directs computational tasks based on sport type and market demand (<strong>Routing</strong>). All calculations are logged and validated against known correct answers (<strong>Evaluation & Monitoring</strong>). The system learns which models perform best and adapts (<strong>Learning and Adaptation</strong>). Unusual game situations trigger alerts for human operators to review (<strong>Human-in-the-Loop</strong>).",
+                patterns: ["Code-Then-Execute", "Parallelization", "Routing", "Evaluation & Monitoring", "Learning and Adaptation", "Human-in-the-Loop"]
+            },
+            {
+                id: "case-study-legacy-migration",
+                name: "Legacy System Data Migration",
+                problem: "A manufacturing company is migrating from a 30-year-old ERP system with proprietary data formats. The legacy system exports data in a non-standard, undocumented format that changes depending on record type. Commercial ETL tools fail to handle the inconsistencies.",
+                solution: "An adaptive migration agent was built. When encountering an unfamiliar data format, the agent analyzes samples and generates custom parsing scripts on-the-fly (<strong>Dynamic Scaffolding</strong>). For example, it might write a Python script with regex patterns specifically tuned to extract fields from that file format. The script executes in a sandbox and outputs clean JSON. If parsing fails, the agent analyzes the error, refines the script, and retries (<strong>Reflection</strong>). The system validates output against target schema requirements (<strong>Guardrails & Safety</strong>). Each file format's successful script is cached (<strong>Memory Management</strong>) so subsequent files of the same type process instantly. Migration specialists monitor results and can intervene for critical records (<strong>Human-in-the-Loop</strong>).",
+                patterns: ["Dynamic Scaffolding", "Reflection", "Guardrails & Safety", "Memory Management", "Human-in-the-Loop"]
+            },
+            {
+                id: "case-study-api-sdk-generator",
+                name: "API Client SDK Generator",
+                problem: "A technology company publishes REST APIs for dozens of services. Developer teams waste time maintaining client SDKs in multiple languages (Python, TypeScript, Java, Go). Every API change requires manual updates across all SDKs, and inconsistencies creep in.",
+                solution: "An automated SDK generator was built. When API teams publish OpenAPI specifications, a spec-first agent reads the spec and generates client libraries (<strong>Spec-First Agent</strong>). The agent ensures all endpoints, parameters, and response types exactly match the specification - no guessing, no hallucinations. The system uses MCP to access spec repositories securely (<strong>Model Context Protocol (MCP)</strong>). Different language SDKs are generated in parallel (<strong>Parallelization</strong>). Each generated SDK runs through automated tests to verify it compiles and calls endpoints correctly (<strong>Evaluation & Monitoring</strong>). The system learns from developer feedback about SDK usability (<strong>Learning and Adaptation</strong>). Platform engineers review generated code before publishing (<strong>Human-in-the-Loop</strong>).",
+                patterns: ["Spec-First Agent", "Model Context Protocol (MCP)", "Parallelization", "Evaluation & Monitoring", "Learning and Adaptation", "Human-in-the-Loop"]
             }
         ];
 
@@ -3214,34 +3689,43 @@
                 subgraph "Core Patterns"
                     P1("Prompt Chaining"):::clickable
                     P2("Routing"):::clickable
-                    P3("Parallelization"):::clickable
-                    P4("Reflection"):::clickable
                     P5("Tool Use"):::clickable
+                    P3("Parallelization"):::clickable
+                    P28("Dynamic Scaffolding"):::clickable
+                    P27("Code-Then-Execute"):::clickable
                 end
-                subgraph "Advanced Patterns"
+                subgraph "Reasoning & Strategy Patterns"
+                    P4("Reflection"):::clickable
                     P6("Planning"):::clickable
-                    P7("Multi-Agent Collaboration"):::clickable
-                    P8("Memory Management"):::clickable
-                    P9("Learning and Adaptation"):::clickable
-                    P10("MCP"):::clickable
+                    P18("Reasoning Techniques"):::clickable
+                    P22("Exploration & Discovery"):::clickable
+                    P24("Parallel Fusion"):::clickable
+                    P21("Prioritization"):::clickable
                 end
-                subgraph "System Patterns"
+                subgraph "Orchestration Patterns"
                     P11("Goal Setting & Monitoring"):::clickable
-                    P12("Exception Handling & Recovery"):::clickable
-                    P13("Human-in-the-Loop"):::clickable
-                    P14("Knowledge Retrieval RAG"):::clickable
+                    P7("Multi-Agent Collaboration"):::clickable
                     P15("Inter-Agent Communication"):::clickable
+                    P17("Resource-Aware Optimization"):::clickable
                     P16("Awareness"):::clickable
                 end
-                subgraph "Optimization & Strategic"
-                    P17("Resource-Aware Optimization"):::clickable
-                    P18("Reasoning Techniques"):::clickable
+                subgraph "Reliability & Control Patterns"
                     P19("Guardrails & Safety"):::clickable
-                    P20("Evaluation & Monitoring"):::clickable
-                    P21("Prioritization"):::clickable
-                    P22("Exploration & Discovery"):::clickable
+                    P13("Human-in-the-Loop"):::clickable
+                    P12("Exception Handling & Recovery"):::clickable
+                    P23("The Stop Hook"):::clickable
+                    P25("The Ralph Wiggum Loop"):::clickable
+                    P29("Spec-First Agent"):::clickable
                 end
-                
+                subgraph "Infrastructure & State Patterns"
+                    P14("Knowledge Retrieval RAG"):::clickable
+                    P20("Evaluation & Monitoring"):::clickable
+                    P8("Memory Management"):::clickable
+                    P10("MCP"):::clickable
+                    P26("Session Isolation"):::clickable
+                    P9("Learning and Adaptation"):::clickable
+                end
+
                 P7 -- "requires" --> P15
                 P7 -. "uses" .-> P6
                 P7 -. "uses" .-> P8
@@ -3261,9 +3745,26 @@
                 P7 -- "detects" --> P16
                 P16 -- "provides facts for" --> P6
                 P16 -- "provides facts for" --> P17
-                
+
+                %% New Connections
+                P23 -- "is a form of" --> P19
+                P25 -- "relies on" --> P23
+                P25 -- "requires" --> P26
+                P24 -- "requires" --> P26
+                P24 -- "is an evolution of" --> P3
+                P5 -- "is used by" --> P23
+
+                %% Connections for New Patterns
+                P26 -- "supports" --> P27
+                P26 -- "supports" --> P28
+                P5 -- "evolves to" --> P27
+                P23 -- "validates" --> P29
+                P18 -- "is a form of" --> P27
+                P5 -- "extended by" --> P28
+                P19 -- "enforces" --> P29
+
                 classDef clickable fill:#36393f,stroke:#61dafb,color:#fff;
-                class P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14,P15,P16,P17,P18,P19,P20,P21,P22 clickable;
+                class P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14,P15,P16,P17,P18,P19,P20,P21,P22,P23,P24,P25,P26,P27,P28,P29 clickable;
         `;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -3416,7 +3917,7 @@
                 if (!cs) return;
 
                 const patternsHtml = cs.patterns.map(patternName => {
-                    const pattern = patternsData.find(p => p.name.toLowerCase().includes(patternName.toLowerCase().split(' ')[0]));
+                    const pattern = patternsData.find(p => p.name === patternName);
                     return `<li><a href="#${pattern.id}">${pattern.name}</a></li>`;
                 }).join('');
 
@@ -3451,7 +3952,9 @@
                     P1: 'prompt-chaining', P2: 'routing', P3: 'parallelization', P4: 'reflection', P5: 'tool-use',
                     P6: 'planning', P7: 'multi-agent-collaboration', P8: 'memory-management', P9: 'learning-and-adaptation', P10: 'model-context-protocol',
                     P11: 'goal-setting-and-monitoring', P12: 'exception-handling-and-recovery', P13: 'human-in-the-loop', P14: 'knowledge-retrieval-rag', P15: 'inter-agent-communication-a2a',
-                    P16: 'awareness', P17: 'resource-aware-optimization', P18: 'reasoning-techniques', P19: 'guardrails-safety-patterns', P20: 'evaluation-and-monitoring', P21: 'prioritization', P22: 'exploration-and-discovery'
+                    P16: 'awareness', P17: 'resource-aware-optimization', P18: 'reasoning-techniques', P19: 'guardrails-safety-patterns', P20: 'evaluation-and-monitoring', P21: 'prioritization', P22: 'exploration-and-discovery',
+                    // New additions
+                    P23: 'stop-hook', P24: 'parallel-fusion', P25: 'ralph-wiggum-loop', P26: 'session-isolation', P27: 'code-then-execute', P28: 'dynamic-scaffolding', P29: 'spec-first-agent'
                 };
 
                 const graphContainer = document.getElementById('relationship-graph');
@@ -3498,7 +4001,7 @@
                         <h2>About This Tutorial</h2>
                     </div>
                     <div class="info-section">
-                        <p>This is a comprehensive interactive tutorial on 22 essential agentic design patterns for building intelligent AI systems. It is designed to make complex architectural concepts accessible through simple visual representations and clear, jargon-free explanations.</p>
+                        <p>This is a comprehensive interactive tutorial on essential agentic design patterns for building intelligent AI systems. It is designed to make complex architectural concepts accessible through simple visual representations and clear, jargon-free explanations.</p>
                         <h3>What's Included</h3>
                         <ul>
                             <li><strong>Visual Mermaid Diagrams:</strong> Flowcharts in plain English showing how each pattern works.</li>
@@ -3507,9 +4010,19 @@
                         </ul>
                         <h3>Credits</h3>
                         <p>The patterns and diagrams are distilled from extensive research on agentic AI systems. For more information visit the following links:</p>
-                        <p><a href="https://github.com/promptadvisers/agentic-design-patterns-docs" target="_blank" rel="noopener noreferrer">Agentic Design Patterns Documentation (by Prompt Advisers)</a></p>
-                        <p><a href="https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018" target="_blank" rel="noopener noreferrer">Agentic Design Patterns: A Hands-On Guide to Building Intelligent Systems (by Antonio Gullí)</a></p>
-                        <p><a href="https://www.researchgate.net/publication/238675575_Brahms_A_multi-agent_modelling_environment_for_simulating_work_processes_and_practices" target="_blank" rel="noopener noreferrer">Brahms: A multi-agent modelling environment for simulating work processes and practices (by Maarten Sierhuis and Ron J. J. van Hoof). Special thanks to user Thaddy in Lazarus forum.</a></p>
+                        <p><a href="https://github.com/promptadvisers/agentic-design-patterns-docs" target="_blank" rel="noopener noreferrer">https://github.com/promptadvisers/agentic-design-patterns-docs</a></p>
+                        <p><a href="https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018" target="_blank" rel="noopener noreferrer">https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018</a></p>
+                        <p><a href="https://www.researchgate.net/publication/238675575_Brahms_A_multi-agent_modelling_environment_for_simulating_work_processes_and_practices" target="_blank" rel="noopener noreferrer">https://www.researchgate.net/publication/238675575_Brahms_A_multi-agent_modelling_environment_for_simulating_work_processes_and_practices</a></p>
+                        <p><a href="https://agentic-patterns.com" target="_blank" rel="noopener noreferrer">https://agentic-patterns.com</a></p>
+                        <p><a href="https://ghuntley.com/ralph/" target="_blank" rel="noopener noreferrer">https://ghuntley.com/ralph/</a></p>
+                        <p><a href="https://x.com/bcherny/status/2007179832300581177" target="_blank" rel="noopener noreferrer">https://x.com/bcherny/status/2007179832300581177</a></p>
+                        <p><a href="https://github.com/guardrails-ai/guardrails" target="_blank" rel="noopener noreferrer">https://github.com/guardrails-ai/guardrails</a></p>
+                        <p><a href="https://medium.com/@dtunai/mastering-git-worktrees-with-claude-code-for-parallel-development-workflow-41dc91e645fe" target="_blank" rel="noopener noreferrer">https://medium.com/@dtunai/mastering-git-worktrees-with-claude-code-for-parallel-development-workflow-41dc91e645fe</a></p>
+                        <p><a href="https://www.youtube.com/watch?v=-WBHNFAB0OE&t=685s" target="_blank" rel="noopener noreferrer">https://www.youtube.com/watch?v=-WBHNFAB0OE&t=685s</a></p>
+                        <p><a href="https://arxiv.org/abs/2406.00832" target="_blank" rel="noopener noreferrer">https://arxiv.org/abs/2406.00832</a></p>
+                        <p><a href="https://arxiv.org/pdf/2203.11171v4.pdf" target="_blank" rel="noopener noreferrer">https://arxiv.org/pdf/2203.11171v4.pdf</a></p>
+                        <p><a href="https://arxiv.org/pdf/2410.09342.pdf" target="_blank" rel="noopener noreferrer">https://arxiv.org/pdf/2410.09342.pdf</a></p>
+                        <p>Special thanks to user Thaddy from the Lazarus forum for pointing out the Brahms research.</p>
                     </div>
                 `;
             };
