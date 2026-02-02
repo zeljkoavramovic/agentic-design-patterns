@@ -161,6 +161,12 @@ If this project has helped you, support is most welcome:
 
 - ⭐ **Star the repository** to show your appreciation.
 - 💬 **Spread the word** about this repository.
+- <a href="https://buymeacoffee.com/cupofavra" target="_blank">
+     <img align="left"
+          src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+          alt="Buy Me A Coffee"
+          style="height: 35px !important; width: 150px !important;" />
+   </a>
 
 
 
