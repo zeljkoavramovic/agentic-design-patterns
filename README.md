@@ -151,7 +151,7 @@ The tutorial covers the following 29 patterns, grouped into categories:
 
 ## License
 
-MIT License - Use this tutorial accordingly!
+MIT - use freely, improve openly, credit kindly.
 
 
 
@@ -168,6 +168,13 @@ If this project has helped you, support is most welcome:
           style="height: 35px !important; width: 150px !important;" />
    </a>
 
+
+
+## Related Projects
+
+- **[CLAUDE.md That Works](https://github.com/zeljkoavramovic/karpathy-bernstein-avramovic)** - Discipline your AI coding sessions across tools and projects: **core coding principles** (think before coding, simplicity first, surgical changes, goal-driven execution), **collaborative working model** (human/AI partnership with explicit boundaries), **order of precedence**, **operating modes** (default, ambiguity, cleanup), **wording conventions** (Must / Should / May), **shared vocabulary / interpretation layer**, **scope control for existing code**, **hard stops with rule citation and authorization gate**, **verification by task type with manual fallback**, **broken baseline handling**, **structured post-task reporting**, **documentation rules**, and **full multi-dimensional agnosticism**. Each feature is designed to keep AI coding more disciplined, safer, and more predictable across languages, frameworks, tools, operating systems, and project types.
+
+  
 
 
 ## Credits
