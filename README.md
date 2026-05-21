@@ -6,14 +6,17 @@ This repository contains an interactive, single-file tutorial on essential agent
 
 ## Overview
 
-The included `index.html` file is a self-contained web page that provides a comprehensive guide to various patterns used in modern AI development. It's designed to make complex architectural concepts accessible through simple visual representations, detailed explanations, and real-world examples.
+The included `index.html` file is a self-contained interactive tutorial and reference guide to various patterns used in modern AI development. It's designed to make complex architectural concepts accessible through simple visual representations, detailed explanations, and real-world examples.
+
+Within a single file, it brings together an overview page, a pattern-relationships view, detailed pattern entries, and case studies.
 
 ### Online Use
 
-Open https://zeljkoavramovic.github.io/agentic-design-patterns/ in your browser.
+Open https://zeljkoavramovic.github.io/agentic-design-patterns/ in your browser to load it.
 
 ### Offline Use
-Simply download the `index.html` file and open it in any modern web browser. No internet connection is required after the initial download.
+
+Simply download the `index.html` file and open it in any modern web browser.
 
 
 
@@ -160,7 +163,7 @@ MIT - use freely, improve openly, credit kindly.
 If this project has helped you, support is most welcome:
 
 - ⭐ **Star the repository** to show your appreciation.
-- 💬 **Spread the word** about this repository.
+- 💬 **Spread the word**.
 - <a href="https://buymeacoffee.com/cupofavra" target="_blank">
      <img align="left"
           src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
@@ -195,3 +198,9 @@ The patterns and diagrams are distilled from extensive research on agentic AI sy
 - https://arxiv.org/pdf/2410.09342.pdf
 
 Special thanks to user Thaddy from the Lazarus forum for pointing out the Brahms research.
+
+
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=zeljkoavramovic/agentic-design-patterns&type=Date)](https://www.star-history.com/#zeljkoavramovic/agentic-design-patterns&Date)
