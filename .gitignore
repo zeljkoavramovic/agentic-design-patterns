@@ -1,5 +1,6 @@
 doc/
 .*/
+!.github/
 *.zip
 *.7z
 *.bat
